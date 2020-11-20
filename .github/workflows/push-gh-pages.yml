@@ -15,11 +15,18 @@ jobs:
           git config --global user.name "Spec Robot"
           git fetch origin gh-pages || true
           git checkout gh-pages || git checkout -b gh-pages
-          date > __timestamp__
           
           branch=$(basename ${{ github.ref }})
-          date > $branch
-          # git clone . --branch $(basename ${{ github.ref }}) --single
-          git add $branch
-          git commit -m "Updated timestamp"
+          rm -rf $branch
+          git clone . --branch $branch --single-branch $branch
+          
+          # Retain git metadata but hide it from git
+          mv $branch/.git $branch/_git
+          
+          # Page build timestamp
+          date > $branch/__timestamp__
+
+          # Push it all
+          git add .
+          git commit -m "Updated $branch"
           git push origin gh-pages
