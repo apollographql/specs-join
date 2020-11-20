@@ -16,18 +16,33 @@ jobs:
           git config --global user.name "Spec Robot"
           git fetch origin gh-pages || true
           git checkout gh-pages || git checkout -b gh-pages
-          
-          branch=$(basename ${{ github.ref }})
-          rm -rf $branch
-          git clone . --branch $branch --single-branch $branch
-          
-          # Retain git metadata but hide it from git
-          mv $branch/.git $branch/_git
-          
-          # Page build timestamp
-          date > $branch/__timestamp__
 
-          # Push it all
+          # find the name of the branch or tag and bail if
+          # we can't
+          #
+          # this is either terrible or beautiful or
+          # perhaps both
+          mkdir -p .scratch/${{ github.ref }}
+          pushd .scratch/refs
+          here=$(pwd)
+          cd heads || cd tags
+          # didn't go anywhere :(
+          if [[ $(pwd) = $here ]]; then exit 1; fi
+          version=$(basename $(pwd))          
+          popd
+          rm -rf .scratch
+
+          # do a clean checkout
+          rm -rf $version
+          git clone . --branch $version --single-branch $version
+          
+          # retain git metadata but hide it from git
+          mv $version/.git $version/_git
+          
+          # write a timestamp
+          date > $version/__timestamp__
+
+          # push it all
           git add .
-          git commit -m "Updated $branch"
+          git commit -m "Updated $version"
           git push origin gh-pages
