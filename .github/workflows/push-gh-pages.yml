@@ -10,6 +10,7 @@ jobs:
           persist-credentials: true
 
       - name: Deploy 🚀
+        if: github.ref != "refs/heads/gh-pages"
         run: |
           git config --global user.email "spec-robot@apollographql.com"
           git config --global user.name "Spec Robot"
