@@ -24,10 +24,10 @@ jobs:
           # perhaps both
           mkdir -p .scratch/${{ github.ref }}
           pushd .scratch/refs
-          here=$(pwd)
           cd heads || cd tags
           # didn't go anywhere :(
-          if [[ $(pwd) = $here ]]; then exit 1; fi
+          if [[ $(basename $(pwd)) = "refs" ]]; then exit 1; fi
+          cd $(ls)
           version=$(basename $(pwd))          
           popd
           rm -rf .scratch
