@@ -271,6 +271,8 @@ The `csdl_Graph` enum is used as input to csdl directives which link fields and 
 
 ## Provided Types
 
+Valid CSDL documents **must** include the declarations of any CSDL types they use.
+
 ### csdl_Never
 ```graphql
 #::[Declaration of csdl_Never]
@@ -300,6 +302,8 @@ Note: Unlike the federation `_FieldSet` scalar, a `csdl_SelectionSet` must parse
 A [URL](https://www.w3.org/Addressing/URL/url-spec.html).
 
 ## Directives
+
+Valid CSDL documents **must** include the declarations of any CSDL directives they use.
 
 ### `@csdl_key`
 
