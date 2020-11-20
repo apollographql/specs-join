@@ -1,0 +1,18 @@
+name: Push Pages
+on: [push]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2.3.1
+        with:
+          persist-credentials: true
+
+      - name: Deploy 🚀
+        run: |
+          git checkout gh-pages
+          date > now
+          git add now
+          git commit -m "Updated timestamp"
+          git push
