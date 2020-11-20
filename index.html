@@ -32,19 +32,32 @@
 
 ## Introduction: What is CSDL?
 
-The Composed Schema Definition Layer (CSDL) provides a way to describe a GraphQL Schema which is composed from one or more other GraphQL schemas.
+```mermaid
+#::[Illustration: CSDL composes multiple subgraph schemas.]
+graph LR
+  s1(astronauts.graphql)-->CSDL
+  s2(rockets.graphql)-->CSDL
+  s3(robots.graphql)-->CSDL
+  style CSDL fill:none,stroke:fuchsia,color:fuchsia;
+```
 
-The CSDL is intended to be a single artifact which can power a graph router. For example, the CSDL replaces the service list configuration of Apollo Gateway.
+The Composed Schema Definition Layer (CSDL) provides schema elements to describe a GraphQL Schema which is composed from one or more other GraphQL schemas. **Schema elements** comprise any item in a GraphQL schema—types, input types, directives, etc. CSDL defines directives and mandatory input types. 
 
-CSDL is a subset of the [GraphQL Schema Definition Language](https://spec.graphql.org/). It removes certain SDL features (for instance, type extensions are not permitted) while also requiring the definition of certain types and providing a suite of directives to describe graph topology. In particular, a CSDL can:
+The CSDL is intended to be a single artifact which can power a graph router. It declares the composed schema and annotates it with directives that allow the router to disassemble input queries and dispatch them to subgraphs.
+
+CSDL restricts the [GraphQL interface description language](https://spec.graphql.org/) in certain ways: type extensions are not permitted, for instance. It also requires the definition of certain types and provides a suite of directives to describe graph topology. In particular, a CSDL can:
 - define [subgraphs](#subgraph) and bind them to [endpoints](#endpoint) (with the required [`csdl_Graph`](#csdl_Graph) type and [`@csdl_endpoint`](#csdl_endpoint) directive)
 - assign fields to subgraphs (with [`@csdl_resolve`](#resolve))
 - declare additional data required and provided by subgraph field resolvers (with [`@csdl_key`](#key), and [`@csdl_resolve`](#csdl_resolve))
 
 ## How to read this document
 
-TK, discussion of spec nomenclature
-e.g.: https://html.spec.whatwg.org/multipage/introduction.html#how-to-read-this-specification
+This document uses [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) guidance regarding normative terms:
+
+> The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+> NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
+> "OPTIONAL" in this document are to be interpreted as described in
+> RFC 2119.
 
 ### What this document isn't
 
@@ -99,7 +112,7 @@ This example is non-normative, and represents just one possible way to compose [
 
 ```graphql
 #::[CSDL composing `rockets` and `astronauts`]
-schema @using(spec: "https://apollo.dev/csdl/1") {
+schema @using(spec: "https://specs.apollo.dev/csdl/v1") {
   query: Query
 }
 
@@ -171,11 +184,16 @@ flowchart TB
     Clients-->Router
 ```
 
-- **Producer** the bit that generates CSDL. spec will place requirements on composers.
-- **Consumer** the bit that consumes CSDL. spec will place requirements on consumers.
-- **Composer** a kind of producer which composes subgraph schemas into CSDL. (no requirements on consumers, diagrammed for clarity.)
-- **Subgraphs** subgraphs which are composed by the composer (no requirements on subgraphs, diagrammed for clarity.)
-- **Router** a kind of consumer which serves CSDL as a graphql endpoint. no requirements on routers, these are described in the federation spec.
+- **Producers** generate CSDL. This spec places requirements on csdl producers.
+- **Consumers** consume CSDL. This spec places requirements on csdl consumers.
+- **Composers** or **compilers** are producers which compose subgraph schemas into CSDL. This document places no particular requirements on the composition algorithm, except that it must produce valid csdl.
+- **Routers** are consumers serve CSDL as a GraphQL endpoint. Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch.
+
+Other components of the system include:
+- **Endpoints** are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
+- **Subgraphs** are the GraphQL schemas which were composed to form the CSDL. A subgraph has:
+  - a name, which must be unique within the CSDL
+  - an [endpoint](#endpoint)
 
 ## Structure
 
@@ -191,7 +209,7 @@ CSDL documents **must** contain a `schema` declaration with a [`@using` directiv
 
 ```graphql
 #::[`@using` directive declaring that the document conforms to csdl v1]
-schema @using(spec: "https://apollo.dev/csdl/1")
+schema @using(spec: "https://specs.apollo.dev/csdl/v1")
 ```
 
 ### Divergence from GraphQL SDL
@@ -199,34 +217,9 @@ Formally, CSDL is a subset of the [GraphQL interface description language](https
 
 In particular, CSDL differs from GraphQL IDL in the following ways:
 - **Extensions are forbidden.** You cannot `extend type` or `extend interface` within a CSDL document.
-- **`schema @using(spec: "https://apollo.dev/csdl/1")` is mandatory.** 
+- **`schema @using(spec: "https://specs.apollo.dev/csdl/v1")` is mandatory.** 
 - the CSDL must define certain types as described in the [mandatory types](#mandatory-types) section.
 
-### Mandatory Types
-
-A CSDL document **must** define a `csdl_Graph` enum. Each enum value defines a subgraph. Each value **must** be annotated with a `@csdl_endpoint` directive specifying the endpoint URL for the subgraph.
-
-```graphql
-#::[Using `csdl_Graph` to define endpoints]
-enum csdl_Graph {
-  ROCKETS @csdl_endpoint(url: "https://rockets.example.com"),
-  ASTRONAUTS @csdl_endpoint(url: "https://astronauts.example.com"),
-}
-```
-
-The `csdl_Graph` enum is used as input to csdl directives which link fields and types to subgraphs.
-
-## Scalars
-
-### `scalar csdl_SelectionSet`
-
-A GraphQL selection set represented with the same syntax as defined in [the GraphQL SDL](https://spec.graphql.org/draft/#sec-Selection-Sets).
-
-Note: Unlike the federation `_FieldSet` scalar, a `csdl_SelectionSet` must parse as a GraphQL selection set, so the selections must be surrounded by braces.
-
-### `scalar csdl_Url`
-
-A [URL](https://www.w3.org/Addressing/URL/url-spec.html).
 
 ## Data Model
 TK, draws heavily from federation, a little more general.
@@ -261,6 +254,50 @@ A type is *portable to* a subgraph if it has a `@csdl_key` for that subgraph.
 ### Free / Bound fields
 
 Free fields can be resolved by any subgraph, bound fields can only be resolved by the subgraph they're bound to.
+
+### Mandatory Types
+
+A CSDL document **must** define a `csdl_Graph` enum. Each enum value defines a subgraph. Each value **must** be annotated with a `@csdl_endpoint` directive specifying the endpoint URL for the subgraph.
+
+```graphql
+#::[Using `csdl_Graph` to define endpoints]
+enum csdl_Graph {
+  ROCKETS @csdl_endpoint(url: "https://rockets.example.com"),
+  ASTRONAUTS @csdl_endpoint(url: "https://astronauts.example.com"),
+}
+```
+
+The `csdl_Graph` enum is used as input to csdl directives which link fields and types to subgraphs.
+
+## Provided Types
+
+### csdl_Never
+```graphql
+#::[Declaration of csdl_Never]
+type csdl_Never {}
+```
+
+The `csdl_Never` type is used to indicate the type of a field which **cannot be resolved**. This is typically due to a composition error. Producers **should** provide more specific error information with a `@csdl_Error` directive on the relevant field.
+
+```graphql
+#::[Using `csdl_Never` and `@csdl_error` to mark a field error]
+type SomeType {
+  someField: csdl_Never
+    @csdl_error(message: "someField defined with conflicting types: Int, String")
+}
+```
+
+## Scalars
+
+### `scalar csdl_SelectionSet`
+
+A GraphQL selection set represented with the same syntax as defined in [the GraphQL SDL](https://spec.graphql.org/draft/#sec-Selection-Sets).
+
+Note: Unlike the federation `_FieldSet` scalar, a `csdl_SelectionSet` must parse as a GraphQL selection set, so the selections must be surrounded by braces.
+
+### `scalar csdl_Url`
+
+A [URL](https://www.w3.org/Addressing/URL/url-spec.html).
 
 ## Directives
 
@@ -371,23 +408,37 @@ type Query {
 }
 ```
 
+### `@csdl_error`
+
+```graphql
+#::[`@csdl_error` declaration]
+directive @csdl_error(
+  graphs: [csdl_Graph!],
+  message: String)
+    on OBJECT
+     | INTERFACE
+     | UNION
+     | FIELD_DEFINITION
+```
+
+`@csdl_error` flags errors that occurred during composition. It's useful for instances where a composer encounters errors but still wants to produce output. It may be used in conjunction with the [`csdl_Never`](#csdl_never) type to indicate that a field cannot be resolved, along with the reason it cannot be resolved.
+
+```graphql
+#::[Using `csdl_Never` and `@csdl_error` to mark a field error]
+type SomeType {
+  someField: csdl_Never
+    @csdl_error(
+      graphs: [ROCKETS, ASTRONAUTS],
+      message: "someField defined with conflicting types")
+}
+```
+
 ## Validations
 
 ### validate all fields resolvable
 ### validate no extensions
 ### validate csdl version
 ### validate all fields resolvable
-
-
-## Glossary
-#### Endpoint
-An endpoint is a running server which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
-#### Graph Router
-A GraphQL server which can resolve queries against a CSDL schema. Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests.
-#### Subgraph
-Subgraphs are the GraphQL schemas which were composed to form the CSDL. A subgraph has:
-  - a name, which must be unique within the CSDL
-  - an [endpoint](#endpoint)
 
 ## Appendix: Suggested Composition Algorithm
 
