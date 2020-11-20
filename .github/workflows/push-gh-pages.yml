@@ -11,6 +11,8 @@ jobs:
 
       - name: Deploy 🚀
         run: |
+          git config --global user.email "spec-robot@apollographql.com"
+          git config --global user.name "Spec Robot"
           git checkout gh-pages || git checkout -b gh-pages
           date > now
           git add now
