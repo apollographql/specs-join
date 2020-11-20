@@ -18,7 +18,7 @@ jobs:
           
           branch=$(basename {{ github.ref }})
           date > $branch
-#          git clone . --branch $(basename {{ github.ref }}) --single
+          # git clone . --branch $(basename {{ github.ref }}) --single
           git add $branch
           git commit -m "Updated timestamp"
           git push origin gh-pages
