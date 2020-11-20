@@ -14,7 +14,11 @@ jobs:
           git config --global user.email "spec-robot@apollographql.com"
           git config --global user.name "Spec Robot"
           git checkout gh-pages || git checkout -b gh-pages
-          date > now
-          git add now
+          date > __timestamp__
+          
+          branch=$(basename {{ github.ref }})
+          date > $branch
+#          git clone . --branch $(basename {{ github.ref }}) --single
+          git add $branch
           git commit -m "Updated timestamp"
           git push origin gh-pages
