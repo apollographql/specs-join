@@ -28,6 +28,7 @@ jobs:
           # didn't go anywhere :(
           if [[ $(basename $(pwd)) = "refs" ]]; then exit 1; fi
           cd $(ls)
+          pwd
           version=$(basename $(pwd))          
           popd
           rm -rf .scratch
