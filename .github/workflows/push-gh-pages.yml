@@ -16,7 +16,7 @@ jobs:
           git checkout gh-pages || git checkout -b gh-pages
           date > __timestamp__
           
-          branch=$(basename {{ github.ref }})
+          branch=$(basename ${{ github.ref }})
           date > $branch
           # git clone . --branch $(basename ${{ github.ref }}) --single
           git add $branch
