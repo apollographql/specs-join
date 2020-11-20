@@ -27,9 +27,9 @@ jobs:
           cd heads || cd tags
           # didn't go anywhere :(
           if [[ $(basename $(pwd)) = "refs" ]]; then exit 1; fi
-          # dive in
-          while [[ $(ls) != "" ]]; do cd $(ls); done
-          version=$(basename $(pwd))          
+          # dive in: find descends to the deepest directory,
+          # whose name we grab with tail
+          version=$(find * | tail -n 1)
           popd
           rm -rf .scratch
 
