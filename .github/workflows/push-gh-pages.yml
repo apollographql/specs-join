@@ -15,4 +15,4 @@ jobs:
           date > now
           git add now
           git commit -m "Updated timestamp"
-          git push
+          git push origin gh-pages
