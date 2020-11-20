@@ -27,8 +27,8 @@ jobs:
           cd heads || cd tags
           # didn't go anywhere :(
           if [[ $(basename $(pwd)) = "refs" ]]; then exit 1; fi
-          cd $(ls)
-          pwd
+          # dive in
+          while [[ $(ls) != "" ]]; do cd $(ls); done
           version=$(basename $(pwd))          
           popd
           rm -rf .scratch
