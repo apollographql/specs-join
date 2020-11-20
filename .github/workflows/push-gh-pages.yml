@@ -1,7 +1,7 @@
 name: Push Pages
 on: [push]
 jobs:
-  build-and-deploy:
+  push-page:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎️
@@ -11,7 +11,7 @@ jobs:
 
       - name: Deploy 🚀
         run: |
-          git checkout gh-pages
+          git checkout gh-pages || git checkout -b gh-pages
           date > now
           git add now
           git commit -m "Updated timestamp"
