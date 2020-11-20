@@ -1,0 +1,15 @@
+{
+  "name": "csdl",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "specs.apollo.dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@apollo/specs.apollo.dev": "file:../specs"
+  }
+}
