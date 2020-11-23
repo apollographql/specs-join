@@ -310,7 +310,7 @@ Note: Unlike the federation `_FieldSet` scalar, a `csdl_SelectionSet` must parse
 
 All legal selection set features are allowed. That includes alises, field arguments, directives, and inline fragments. Named fragment spreads are syntactically valid, but meaningless, as there is nowhere to define named fragments; future versions of this spec may change this.
 
-### `scalar csdl_Url`
+### `scalar csdl_URL`
 
 A [URL](https://www.w3.org/Addressing/URL/url-spec.html).
 
@@ -364,7 +364,7 @@ type Astronaut
 
 ```graphql
 #::[`@csdl_endpoint` declaration]
-directive @csdl_endpoint(url: csdl_Url) on ENUM_VALUE
+directive @csdl_endpoint(url: csdl_URL) on ENUM_VALUE
 ```
 
 Bind an endpoint URL to a subgraph. This directive is only valid on enum values within the required `csdl_Graph` enum type.
