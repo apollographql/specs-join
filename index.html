@@ -308,6 +308,8 @@ A GraphQL selection set represented with the same syntax as defined in [the Grap
 
 Note: Unlike the federation `_FieldSet` scalar, a `csdl_SelectionSet` must parse as a GraphQL selection set, so the selections must be surrounded by braces.
 
+All legal selection set features are allowed. That includes alises, field arguments, directives, and inline fragments. Named fragment spreads are syntactically valid, but meaningless, as there is nowhere to define named fragments; future versions of this spec may change this.
+
 ### `scalar csdl_Url`
 
 A [URL](https://www.w3.org/Addressing/URL/url-spec.html).
