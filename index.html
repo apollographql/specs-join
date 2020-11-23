@@ -46,9 +46,9 @@ The Composed Schema Definition Layer (CSDL) provides schema elements to describe
 The CSDL is intended to be a single artifact which can power a graph router. It declares the composed schema and annotates it with directives that allow the router to disassemble input queries and dispatch them to subgraphs.
 
 CSDL restricts the [GraphQL interface description language](https://spec.graphql.org/) in certain ways: type extensions are not permitted, for instance. It also requires the definition of certain types and provides a suite of directives to describe graph topology. In particular, a CSDL can:
-- define [subgraphs](#subgraph) and bind them to [endpoints](#endpoint) (with the required [`csdl_Graph`](#csdl_Graph) type and [`@csdl_endpoint`](#csdl_endpoint) directive)
-- assign fields to subgraphs (with [`@csdl_resolve`](#resolve))
-- declare additional data required and provided by subgraph field resolvers (with [`@csdl_key`](#key), and [`@csdl_resolve`](#csdl_resolve))
+- define [subgraphs](#def-subgraph) and bind them to [endpoints](#def-endpoint) (with the required [`csdl_Graph`](#csdl_Graph) type and [`@csdl_endpoint`](#csdl_endpoint) directive)
+- assign fields to subgraphs (with [`@csdl_resolve`](#csdl_resolve))
+- declare additional data required and provided by subgraph field resolvers (with [`@csdl_key`](#csdl_key), and [`@csdl_resolve`](#csdl_resolve))
 
 ## How to read this document
 
@@ -184,16 +184,25 @@ flowchart TB
     Clients-->Router
 ```
 
-- **Producers** generate CSDL. This spec places requirements on csdl producers.
-- **Consumers** consume CSDL. This spec places requirements on csdl consumers.
-- **Composers** or **compilers** are producers which compose subgraph schemas into CSDL. This document places no particular requirements on the composition algorithm, except that it must produce valid csdl.
-- **Routers** are consumers which serve a composed schema as a GraphQL endpoint.
+<a name=def-producer></a>
+**Producers** generate CSDL. This spec places requirements on csdl producers.
+
+<a name=def-consumer></a>
+**Consumers** consume CSDL. This spec places requirements on csdl consumers.
+
+<a name=def-composer></a>
+**Composers** or **compilers** are producers which compose subgraph schemas into CSDL. This document places no particular requirements on the composition algorithm, except that it must produce valid csdl.
+
+<a namme=def-router></a>
+**Routers** are consumers which serve a composed schema as a GraphQL endpoint.
   - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch.
   - Routers **may**—and typically will—omit CSDL directives and types from the schema they present to clients via introspection
 
-Other components of the system include:
-- **Endpoints** are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
-- **Subgraphs** are the GraphQL schemas which were composed to form the CSDL. A subgraph has:
+<a name=def-endpoint></a>
+**Endpoints** are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
+
+<a name=def-subgraph></a>
+**Subgraphs** are the GraphQL schemas which were composed to form the CSDL. A subgraph has:
   - a name, which must be unique within the CSDL
   - an [endpoint](#endpoint)
 
