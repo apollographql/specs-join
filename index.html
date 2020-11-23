@@ -225,12 +225,11 @@ CSDL documents **must** contain a `schema` declaration with a [`@using` directiv
 schema @using(spec: "https://specs.apollo.dev/csdl/v1")
 ```
 
-### Forbidden GraphQL IDL features
+### Forbidden GraphQL Constructs
 
 CSDL documents cannot contain certain [GraphQL type system](https://spec.graphql.org/draft/#sec-Type-System) constructs. Specifically, **extensions are forbidden.** You cannot `extend type` or `extend interface` within a CSDL document. Producers **must** produce documents without extensions.
 
 ## Data Model
-TK, draws heavily from federation, a little more general.
 
 ### Realized types
 
@@ -256,15 +255,23 @@ These distinctions are immaterial to the client. As far as clients are concerned
 
 This illusion is maintained by the router, which must break incoming queries into subqueries. In the example above, the path `rockets.captain` is resolved by the `rockets::Rocket.astronaut` resolver, so its selection set is realized as a `rockets::Astronaut`. However, there is no `name` field for `rockets::Astronaut`—instead, the only resolver for `Astronaut.name` is `astronauts::Astronaut.name`. To process this query, the router must "convert" a `rockets::Astronaut` to an `astronauts::Astronaut` via an `_entities` query.
 
+### Free / Bound fields
+Free fields can be resolved by any subgraph, bound fields can only be resolved by the subgraph they're bound to.
+
 ### Portability
 A type is *portable to* a subgraph if it has a `@csdl_key` for that subgraph.
 
-### Free / Bound fields
+Incoming queries cross subgraph boundaries (and thus require "porting") wherever they select a field that is not resolvable by the subgraph of the realized type from which they are selected. In the above example, selecting `rockets.captain.name` crosses such a boundary, since `rockets.captain` has the realized type `rockets::Astronaut` and `captain.name` is only resolvable by `astronauts::Astronaut.name`.
 
-Free fields can be resolved by any subgraph, bound fields can only be resolved by the subgraph they're bound to.
+If fields have multiple bound resolvers, routers **should** select the resolver which does not require crossing subgraph boundaries, if possible.
 
-### Mandatory Types
+If crossing subgraph boundaries is unavoidable, routers *must* use a [federated _entities query](https://www.apollographql.com/docs/federation/federation-spec/#query_entities) to re-enter the type in the destination subgraph.
 
+## Mandatory Types
+
+Unless otherwise specified, valid composed schemas **must** declare these types.
+
+### `csdl_Graph`
 A CSDL document **must** define a `csdl_Graph` enum. Each enum value defines a subgraph. Each value **must** be annotated with a `@csdl_endpoint` directive specifying the endpoint URL for the subgraph.
 
 ```graphql
@@ -287,7 +294,7 @@ Valid CSDL documents **must** include the declarations of any CSDL types they us
 type csdl_Never {}
 ```
 
-The `csdl_Never` type is used to indicate the type of a field which **cannot be resolved**. This is typically due to a composition error. Producers **should** provide more specific error information with a `@csdl_Error` directive on the relevant field.
+The `csdl_Never` type is used to indicate the type of a field which **cannot be resolved**. This is typically due to a composition error. Producers **should** provide more specific error information with a `@csdl_error` directive on the relevant field.
 
 ```graphql
 #::[Using `csdl_Never` and `@csdl_error` to mark a field error]
