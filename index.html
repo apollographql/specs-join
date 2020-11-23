@@ -206,6 +206,8 @@ flowchart TB
   - a name, which must be unique within the CSDL
   - an [endpoint](#endpoint)
 
+This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to provide a CSL; neither is it an error for them to do so. Composers **may** place additional requirements on subgraph schemas to aid in composition; composers **should** document any such requirements.
+
 ## Structure
 
 A CSDL document must be a valid [GraphQL schema definition language](https://spec.graphql.org/draft/#sec-Type-System) document.
