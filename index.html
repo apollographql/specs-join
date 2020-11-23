@@ -206,7 +206,7 @@ flowchart TB
   - a name, which must be unique within the CSDL
   - an [endpoint](#endpoint)
 
-This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to provide a CSL; neither is it an error for them to do so. Composers **may** place additional requirements on subgraph schemas to aid in composition; composers **should** document any such requirements.
+This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to provide a CSDL; neither is it an error for them to do so. Composers **may** place additional requirements on subgraph schemas to aid in composition; composers **should** document any such requirements.
 
 ## Structure
 
@@ -320,7 +320,7 @@ A GraphQL selection set represented with the same syntax as defined in [the Grap
 
 Note: Unlike the federation `_FieldSet` scalar, a `csdl_SelectionSet` must parse as a GraphQL selection set, so the selections must be surrounded by braces.
 
-All legal selection set features are allowed. That includes alises, field arguments, directives, and inline fragments. Named fragment spreads are syntactically valid, but meaningless, as there is nowhere to define named fragments; future versions of this spec may change this.
+All legal selection set features are allowed. That includes aliases, field arguments, directives, and inline fragments. Named fragment spreads are syntactically valid, but meaningless, as there is nowhere to define named fragments; future versions of this spec may change this.
 
 ### `csdl_URL`
 
