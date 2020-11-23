@@ -225,14 +225,9 @@ CSDL documents **must** contain a `schema` declaration with a [`@using` directiv
 schema @using(spec: "https://specs.apollo.dev/csdl/v1")
 ```
 
-### Divergence from GraphQL SDL
-Formally, CSDL is a subset of the [GraphQL interface description language](https://spec.graphql.org/draft/#sec-Type-System).
+### Forbidden GraphQL IDL features
 
-In particular, CSDL differs from GraphQL IDL in the following ways:
-- **Extensions are forbidden.** You cannot `extend type` or `extend interface` within a CSDL document.
-- **`schema @using(spec: "https://specs.apollo.dev/csdl/v1")` is mandatory.** 
-- the CSDL must define certain types as described in the [mandatory types](#mandatory-types) section.
-
+CSDL documents cannot contain certain [GraphQL type system](https://spec.graphql.org/draft/#sec-Type-System) constructs. Specifically, **extensions are forbidden.** You cannot `extend type` or `extend interface` within a CSDL document. Producers **must** produce documents without extensions.
 
 ## Data Model
 TK, draws heavily from federation, a little more general.
@@ -304,7 +299,15 @@ type SomeType {
 
 ## Scalars
 
-### `scalar csdl_SelectionSet`
+Valid CSDL documents **must** include the declarations of any CSDL scalars they use. Producers **should** include the `@specifiedBy` directive, but it is not mandatory.
+
+### `csdl_SelectionSet`
+
+```graphql
+#::[`scalar csdl_SelectionSet` declaration]
+scalar csdl_SelectionSet
+  @specifiedBy(url: "https://specs.apollo.dev/csdl/v1#csdl_selectionset")
+```
 
 A GraphQL selection set represented with the same syntax as defined in [the GraphQL SDL](https://spec.graphql.org/draft/#sec-Selection-Sets).
 
@@ -312,9 +315,15 @@ Note: Unlike the federation `_FieldSet` scalar, a `csdl_SelectionSet` must parse
 
 All legal selection set features are allowed. That includes alises, field arguments, directives, and inline fragments. Named fragment spreads are syntactically valid, but meaningless, as there is nowhere to define named fragments; future versions of this spec may change this.
 
-### `scalar csdl_URL`
+### `csdl_URL`
 
-A [URL](https://www.w3.org/Addressing/URL/url-spec.html).
+```graphql
+#::[`scalar csdl_URL` declaration]
+scalar csdl_URL
+  @specifiedBy(url: "https://specs.apollo.dev/csdl/v1#csdl_url")
+```
+
+A [URL](https://www.w3.org/Addressing/URL/url-spec.html). Used by `@csdl_endpoint`.
 
 ## Directives
 
