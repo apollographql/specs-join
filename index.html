@@ -152,7 +152,7 @@ flowchart TB
 <a namme=def-router></a>
 **Routers** are consumers which serve a composed schema as a GraphQL endpoint.
   - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch.
-  - Routers **may**—and typically will—omit `compose`d schema elements from the schema they present to clients via introspection (`csdl_Graph`, for example, **may** and often will be omitted)
+  - Routers **may**—and typically will—omit `compose`d schema elements from the schema they present to clients via introspection (`compose_Graph`, for example, **may** and often will be omitted)
 
 <a name=def-endpoint></a>
 **Endpoints** are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
