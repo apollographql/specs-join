@@ -1,0 +1,13 @@
+type Album {
+  user: User
+  photos: [Image!]
+}
+
+extend type Image {
+  albums: [Album!]
+}
+
+extend type User {
+  albums: [Album!]
+  favorite: Album
+}
