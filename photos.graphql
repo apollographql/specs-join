@@ -1,55 +1,87 @@
 directive @using(spec: using_URL!)
   on SCHEMA
 
-directive @composed_key(graph: composed_Graph!, repr: composed_SelectionSet!)
+directive @compose_key(graph: compose_Graph!, repr: compose_SelectionSet!)
   repeatable on OBJECT
+
+directive @compose_resolve(
+  graph: compose_Graph!,
+  requires: compose_SelectionSet,
+  provides: compose_SelectionSet)
+  on FIELD_DEFINITION
+
+directive @compose_error(
+  graphs: [compose_Graph!],
+  message: String)
+    on OBJECT
+     | INTERFACE
+     | UNION
+     | FIELD_DEFINITION
+
+directive @compose_link(to: compose_OutboundLink!)
+  on ENUM_VALUE
+
+input compose_OutboundLink {
+  http: compose_OutboundLinkHTTP
+}
+
+input compose_OutboundLinkHTTP {
+  url: compose_URL
+}
+
+enum compose_Graph {
+  AUTH @compose_link(to: {
+    http: { url: "https://auth.api.example.com" }
+  }),
+  ALBUMS @compose_link(to: {
+    http: { url: "https://albums.api.example.com" }
+  }),
+  IMAGES @compose_link(to: {
+    http: { url: "https://images.api.example.com" }
+  }),
+}
+
+scalar compose_Never
+  @specifiedBy(url: "https://specs.apollo.dev/composed/v1#compose_never")
+
+scalar compose_SelectionSet
+  @specifiedBy(url: "https://specs.apollo.dev/composed/v1#compose_selectionset")
+
+scalar compose_URL
+  @specifiedBy(url: "https://specs.apollo.dev/composed/v1#compose_url")
+
 
 schema @using(spec: "https://specs.apollo.dev/composed/v1") {
   query: Query
 }
 
-enum composed_Graph {
-  AUTH @composed_http(url: "https://auth.api.example.com"),
-  ALBUMS @composed_http(url: "https://albums.api.example.com"),
-  IMAGES @composed_http(url: "https://images.api.example.com"),
-}
-
-scalar composed_Never
-  @specifiedBy(url: "https://specs.apollo.dev/composed/v1#composed_never")
-
-scalar composed_SelectionSet
-  @specifiedBy(url: "https://specs.apollo.dev/composed/v1#composed_selectionset")
-
-scalar composed_URL
-  @specifiedBy(url: "https://specs.apollo.dev/composed/v1#composed_url")
-
 type Query {
-  me: User        @composed_resolve(graph: AUTH)
-  images: [Image] @composed_resolve(graph: IMAGES)
+  me: User        @compose_resolve(graph: AUTH)
+  images: [Image] @compose_resolve(graph: IMAGES)
 }
 
 type User
-  @composed_key(graph: AUTH, repr: "{ id }")
-  @composed_key(graph: ALBUMS, repr: "{ id }") {
-  id: ID            @composed_resolve(graph: AUTH)
-  name: String      @composed_resolve(graph: AUTH)
-  albums: [Album!]  @composed_resolve(graph: ALBUMS)
-  favorite: composed_Never @composed_error(graphs: [ALBUMS, IMAGES],
-                                           message: "Field types conflict")
+  @compose_key(graph: AUTH, repr: "{ id }")
+  @compose_key(graph: ALBUMS, repr: "{ id }") {
+  id: ID            @compose_resolve(graph: AUTH)
+  name: String      @compose_resolve(graph: AUTH)
+  albums: [Album!]  @compose_resolve(graph: ALBUMS)
+  favorite: compose_Never @compose_error(graphs: [ALBUMS, IMAGES],
+                                         message: "Field types conflict")
 
 }
 
 type Album {
-  user: User        @composed_resolve(graph: ALBUMS)
-  photos: [Image!]  @composed_resolve(graph: ALBUMS)
+  user: User        @compose_resolve(graph: ALBUMS)
+  photos: [Image!]  @compose_resolve(graph: ALBUMS)
 }
 
 type Image
-  @composed_key(graph: IMAGE, repr: "{ url }")
-  @composed_key(graph: ALBUMS, repr: "{ url }") {
-  url: Url          @composed_resolve(graph: IMAGES)
-  type: MimeType    @composed_resolve(graph: IMAGES)
-  albums: [Album!]  @composed_resolve(graph: ALBUMS)
+  @compose_key(graph: IMAGE, repr: "{ url }")
+  @compose_key(graph: ALBUMS, repr: "{ url }") {
+  url: Url          @compose_resolve(graph: IMAGES)
+  type: MimeType    @compose_resolve(graph: IMAGES)
+  albums: [Album!]  @compose_resolve(graph: ALBUMS)
 }
 
 scalar Url
