@@ -42,16 +42,16 @@ enum compose_Graph {
 }
 
 scalar compose_Never
-  @specifiedBy(url: "https://specs.apollo.dev/composed/v1#compose_never")
+  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#compose_never")
 
 scalar compose_SelectionSet
-  @specifiedBy(url: "https://specs.apollo.dev/composed/v1#compose_selectionset")
+  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#compose_selectionset")
 
 scalar compose_URL
-  @specifiedBy(url: "https://specs.apollo.dev/composed/v1#compose_url")
+  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#compose_url")
 
 
-schema @using(spec: "https://specs.apollo.dev/composed/v1") {
+schema @using(spec: "https://specs.apollo.dev/compose/v1") {
   query: Query
 }
 
