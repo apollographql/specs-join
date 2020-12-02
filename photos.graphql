@@ -46,13 +46,13 @@ enum cs_Graph {
 }
 
 scalar cs_Never
-  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#cs_never")
+  @specifiedBy(url: "https://specs.apollo.dev/cs/v1#cs_never")
 
 scalar cs_SelectionSet
-  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#cs_selectionset")
+  @specifiedBy(url: "https://specs.apollo.dev/cs/v1#cs_selectionset")
 
 scalar cs_URL
-  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#cs_url")
+  @specifiedBy(url: "https://specs.apollo.dev/cs/v1#cs_url")
 
 type Query {
   me: User        @cs_resolve(graph: AUTH)
