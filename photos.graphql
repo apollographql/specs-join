@@ -91,15 +91,5 @@ fragment Image_url on Image
   url
 }
 
-
-# input Image_key_url {
-#   __typename: String
-#   url: Url
-# }
-
-query albums_Image_by_url($representations: Url) @partial {
-  _entities(representations: [{ __typename: "Image", url: $url }])
-}
-
 scalar Url
 scalar MimeType
