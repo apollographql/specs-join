@@ -60,9 +60,9 @@ graph LR
 `Compose`d schemas are generally assumed to be machine-generated from source schemas. Design decisions lean towards making them easy to consume—explicitness is favored over implicitness, even where this may become repetitive.
 
 Within composed schemas, one can:
-- define [subgraphs](#def-subgraph) and bind them to [endpoints](#def-endpoint) (with the required [`compose_Graph`](#compose_Graph) type and [`@compose_outbound`](#compose_outbound) directive)
-- assign fields to subgraphs (with [`@compose_resolve`](#compose_resolve))
-- declare additional data required and provided by subgraph field resolvers (with [`@compose_key`](#compose_key), and [`@compose_resolve`](#compose_resolve))
+- define [subgraphs](#def-subgraph) and bind them to [endpoints](#def-endpoint) (with the required [`cs_Graph`](#cs_Graph) type and [`@cs_outbound`](#cs_outbound) directive)
+- assign fields to subgraphs (with [`@cs_resolve`](#cs_resolve))
+- declare additional data required and provided by subgraph field resolvers (with [`@cs_key`](#cs_key), and [`@cs_resolve`](#cs_resolve))
 
 ## How to read this document
 
@@ -88,7 +88,7 @@ We'll refer to this example of a photo library throughout the document:
   title='Photos library composed schema'
 ></view-of>
 
-The meaning of the `@compose_` directives is explored in the [Directives](#directives) section.
+The meaning of the `@cs_` directives is explored in the [Directives](#directives) section.
 
 The example composes three schemas:
 
@@ -154,13 +154,13 @@ flowchart TB
 <a namme=def-router></a>
 **Routers** are consumers which serve a composed schema as a GraphQL endpoint.
   - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch.
-  - Routers **may**—and typically will—omit `compose`d schema elements from the schema they present to clients via introspection (`compose_Graph`, for example, **may** and often will be omitted)
+  - Routers **may**—and typically will—omit `compose`d schema elements from the schema they present to clients via introspection (`cs_Graph`, for example, **may** and often will be omitted)
 
 <a name=def-endpoint></a>
 **Endpoints** are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
 
 <a name=def-subgraph></a>
-**Subgraphs** are the GraphQL schemas which were composed to form the `compose`d schema. They are declared as values on the special `compose_Graph` enum. Link transport data is provided with the `@compose_link` directive.
+**Subgraphs** are the GraphQL schemas which were composed to form the `compose`d schema. They are declared as values on the special `cs_Graph` enum. Link transport data is provided with the `@cs_link` directive.
 
 This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to be `compose`d or follow this spec in any way; neither is it an error for them to do so. Composers **may** place additional requirements on subgraph schemas to aid in composition; composers **should** document any such requirements.
 
@@ -170,7 +170,7 @@ A `compose`d schema must be a valid [GraphQL schema definition language](https:/
 
 Certain GraphQL features are restricted within `compose`d schemas. In particular, **extensions are forbidden**. Producers **must** not generate `compose`d schemas which contain type or interface extensions. Nevertheless, consumers **should** be prepared to parse any valid GraphQL SDL. A `compose`d schema document which contains type extensions or any other disallowed constructs **should** trigger validation errors after parsing.
 
-This spec introduces a suite of types and directives. All schema elements introduced in this spec carry a `compose_` prefix, as recommended in [the GraphQL specification](https://spec.graphql.org/draft/#note-ca863).
+This spec introduces a suite of types and directives. All schema elements introduced in this spec carry a `cs_` prefix, as recommended in [the GraphQL specification](https://spec.graphql.org/draft/#note-ca863).
 
 ### Declare use of this spec
 
@@ -182,20 +182,20 @@ This spec introduces a suite of types and directives. All schema elements introd
 
 ### `Compose`d schemas must not contain `TypeSystemExtension`s
 
-`Compose`d schemas cannot contain extensions—you cannot `extend type` or `extend interface` within a `compose`d schema. Producers **must** generate documents which contain only GraphQL [`TypeSystemDefinition`s](http://spec.graphql.org/draft/#sec-Type-System). Consumers **should** ignore any `TypeSystemExtension`s or other meaningless definitions within `compose`d schemas.
+`Compose`d schemas cannot contain extensions—you cannot `extend type` or `extend interface` within a `compose`d schema. Producers **must** generate documents which contain only GraphQL [`TypeSystemDefinition`s](http://spec.graphql.org/draft/#sec-Type-System) and [`ExecutableDefinition`s](http://spec.graphql.org/draft/#Document). Consumers **should** ignore any `TypeSystemExtension`s they encounter within a `compose`d schema.
 
 ## Enums
 
-`compose`d schemas **must** definitions of any enums they use.
+`compose`d schemas **must** include the definitions of any enums they use.
 
-### `compose_Graph`
-A CSDL document **must** define a `compose_Graph` enum. Each enum value defines a subgraph. Each value **must** be annotated with a `@compose_link` directive specifying how to connect to the subgraph.
+### `cs_Graph`
+A CSDL document **must** define a `cs_Graph` enum. Each enum value defines a subgraph. Each value **must** be annotated with a `@cs_link` directive specifying how to connect to the subgraph.
 
-<view-of src=photos.graphql#compose_Graph
-  title='Using compose_Graph to define endpoints'
+<view-of src=photos.graphql#cs_Graph
+  title='Using cs_Graph to define endpoints'
 ></view-of>
 
-The `compose_Graph` enum is used as input to `compose`d schema directives which link fields and types to subgraphs.
+The `cs_Graph` enum is used as input to `compose`d schema directives which link fields and types to subgraphs.
 
 ## Input Object Types
 
@@ -204,11 +204,11 @@ The `compose_Graph` enum is used as input to `compose`d schema directives which 
 `input`s do not have to be specified exactly as they are in this spec—they need only be *compatible*. In particular, a `compose`d schema may:
   - **Change nullable fields to non-nullable,** indicating that this `compose`d schema adheres to a stricter contract than required.
   - **Omit nullable fields** which are never referenced
-  - **Introduce new fields.** Fields added to an `input` **must** be prefixed with `someVendorPrefix_`. For example, a composed schema might introduce a custom field on `compose_OutboundLink` to hold internal service discovery information:
+  - **Introduce new fields.** Fields added to an `input` **must** be prefixed with `someVendorPrefix_`. For example, a composed schema might introduce a custom field on `cs_OutboundLink` to hold internal service discovery information:
 
 ```graphql
-#::[Using a custom field in `compose_OutboundLink`]
-input compose_OutboundLink {
+#::[Using a custom field in `cs_OutboundLink`]
+input cs_OutboundLink {
   exampleOrg_gslb: exampleOrg_OutboundGSLB
 }
 
@@ -217,28 +217,28 @@ input exampleOrg_OutboundGSLB {
   protocolVersion: Int = 2
 }
 
-enum compose_Graph {
-  AUTH @compose_link(to: {
+enum cs_Graph {
+  AUTH @cs_link(to: {
     exampleOrg_gslb: {
       service: "gaia/auth-gql-prod", protocol_version: 1
     }
   }),
-  MAPS @compose_link(to: {
+  MAPS @cs_link(to: {
     exampleOrg_gslb: { service: "geo/prod" }
   })
 }
 ```
 
-### compose_OutboundLink
-<view-of src=photos.graphql#compose_OutboundLink
-  title='Definition of compose_OutboundLink'
+### cs_OutboundLink
+<view-of src=photos.graphql#cs_OutboundLink
+  title='Definition of cs_OutboundLink'
   class=no-linum></view-of>
 
 Provides information about an **outbound link**—a connection to a subgraph across which operations can be executed.
 
-### compose_OutboundLinkHTTP
-<view-of src=photos.graphql#compose_OutboundLinkHTTP
-  title='Definition of compose_OutboundLinkHTTP'
+### cs_OutboundLinkHTTP
+<view-of src=photos.graphql#cs_OutboundLinkHTTP
+  title='Definition of cs_OutboundLinkHTTP'
   class=no-linum></view-of>
 
 Provides HTTP-specific configuration for outbound links. **TK: Currently, this is just a URL, but this is the place where we could do a lot more: headers, etc. ~ak**
@@ -248,166 +248,196 @@ Provides HTTP-specific configuration for outbound links. **TK: Currently, this i
 
 `compose`d schemas **must** include definitions of any scalars they use. Producers **should** include the `@specifiedBy` directive, but it is not mandatory.
 
-### `compose_SelectionSet`
+### `cs_SelectionSet`
 
-<view-of src=photos.graphql#compose_SelectionSet
-  title='Definition of compose_SelectionSet'
+<view-of src=photos.graphql#cs_SelectionSet
+  title='Definition of cs_SelectionSet'
   class=no-linum
 ></view-of>
 
 A GraphQL selection set represented with the same syntax as defined in [the GraphQL SDL](https://spec.graphql.org/draft/#sec-Selection-Sets).
 
-Note: Unlike the federation `_FieldSet` scalar, a `compose_SelectionSet` must parse as a GraphQL selection set, so the selections must be surrounded by braces.
+Note: Unlike the federation `_FieldSet` scalar, a `cs_SelectionSet` must parse as a GraphQL selection set, so the selections must be surrounded by braces.
 
 All legal selection set features are allowed. That includes aliases, field arguments, directives, and inline fragments. Named fragment spreads are syntactically valid, but meaningless, as there is nowhere to define named fragments; future versions of this spec may change this.
 
-### `compose_URL`
+### `cs_URL`
 
-<view-of src=photos.graphql#compose_URL
-  title='Definition of compose_URL'
+<view-of src=photos.graphql#cs_URL
+  title='Definition of cs_URL'
   class=no-linum
 ></view-of>
 
-A [URL](https://www.w3.org/Addressing/URL/url-spec.html). Used by [`@compose_outbound`](#compose_outbound).
+A [URL](https://www.w3.org/Addressing/URL/url-spec.html). Used by [`@cs_outbound`](#cs_outbound).
 
-### compose_Never
+### cs_Never
 
-<view-of src=photos.graphql#compose_Never
-  title='Definition of compose_Never'
+<view-of src=photos.graphql#cs_Never
+  title='Definition of cs_Never'
   class=no-linum
 ></view-of>
 
-The `compose_Never` scalar is used to indicate the type of a field which **cannot be resolved**. This is typically due to a composition error. Producers **should** provide more specific error information with a `@compose_error` directive on the relevant field.
+The `cs_Never` scalar is used to indicate the type of a field which **cannot be resolved**. This is typically due to a composition error. Producers **should** provide more specific error information with a `@cs_error` directive on the relevant field.
 
 <view-of src=photos.graphql#User.favorite
-  title='Using <code>compose_Never</code> and <code>@compose_error</code> to mark a field error'
+  title='Using <code>cs_Never</code> and <code>@cs_error</code> to mark a field error'
 ></view-of>
 
 ## Directives
 
 `compose`d schema **must** include the definitions of all directives they use. Directives from this spec **must** be defined exactly as they are specified here. (This ensures that `compose`d schemas pass standard validations, even if those validators do not know of this spec.)
 
-### `@compose_key`
-<view-of src=photos.graphql#@compose_key
-  title='Definition of compose_key'
+### `@cs_key`
+<view-of src=photos.graphql#@cs_key
+  title='Definition of cs_key'
   class=no-linum
 ></view-of>
 
-Define an entity key for this type within a subgraph.
+Define an entity key.
 
-The `@compose_key` directive tells consumers what subset of fields are necessary to identify this type of entity to a particular subgraph. It provides a way for consumers to "switch graphs" when planning a query. For example:
+`@cs_key` is applied to a fragment to mark that fragment as an entity key.
 
-```graphql
-#::[A query which requires porting the `Astronaut` type between subgraphs]
-query {          # resolver                    | realizes
-                 # ----------------------------|--------------
-  rockets {      # rockets::Query.rockets     -> rockets::Rocket
-    captain {    # rockets::Rocket.astronaut  -> rockets::Astronaut
-      name       # astronauts::Astronaut.name -> String
-      rocket {   # rockets::Astronaut.rocket  -> rockets::Rocket
-        id       # rockets::Rocket.id         -> ID
-      }
-    }
-  }
-  
-}
-```
+Keys will be passed as `representations` within a [portal query](#portal-query) to [port](#portability) a selection set between subgraphs.
 
-`Astronaut.name` is provided by the `astronauts` subgraph. But the `captain` field is provided by the `rockets` subgraph.
-
-The fields specified in `repr` will be passed to the subgraph's `Query._entities(representations:)` as an item within the `representations` list.
-
-Multiple `@compose_key`s can be provided for different graphs, or for the same graph.
-
-<view-of src=photos.graphql#Image
-  title='Using <code>@compose_key</code> to specify subgraph keys'
-  highlight='line => line.includes("@compose_key")'
+<view-of src=photos.graphql#Image_url
+  title='Using <code>@cs_key</code> to specify subgraph keys'
 ></view-of>
 
-### `@compose_link`
+Multiple `@cs_key`s can be provided for different graphs, or for the same graph.
 
-<view-of src=photos.graphql#@compose_link...compose_OutboundLinkHTTP
-  title='Definition of compose_link and related inputs'
+### `@cs_link`
+
+<view-of src=photos.graphql#@cs_link...cs_OutboundLinkHTTP
+  title='Definition of cs_link and related inputs'
   class=no-linum
 ></view-of>
 
-`@compose_link` declares links to other graphs defined within `compose_Graph`. For example, `@compose_link` is where you specify HTTP endpoint URLs for subgraph services.
+`@cs_link` declares links to other graphs defined within `cs_Graph`. For example, `@cs_link` is where you specify HTTP endpoint URLs for subgraph services.
 
-<view-of src=photos.graphql#compose_Graph
-  title='Using <code>@compose_link</code> to specify subgraph connections'
-></view-of>
+![Using `@cs_link` to specity subgraph connections](view:photos.graphql#cs_Graph)
 
-This directive is only valid on enum values within the required `compose_Graph` enum type.
+This directive is only valid on enum values within the required `cs_Graph` enum type.
 
-### `@compose_resolve`
+### `@cs_resolve`
 
-<view-of src=photos.graphql#@compose_resolve
-  title='Definition of <code>@compose_resolve</code>'
+<view-of src=photos.graphql#@cs_resolve
+  title='Definition of <code>@cs_resolve</code>'
   class=no-linum></view-of>
 
 Bind a subgraph resolver to this field.
 
-Any field definitions without a `@compose_resolve` directive are *free*. That is, the `compose`d schema asserts they can be resolved by any subgraph in which the parent type can be found. Specifying `@compose_resolve` binds a field to resolve in exactly one subgraph. Unless it is a root type, the enclosing type **must** be [portable](#portability) to the specified subgraph (it must have `@compose_key`s specified for that graph).
+Any field definitions without a `@cs_resolve` directive are *free*. That is, the `compose`d schema asserts they can be resolved by any subgraph in which the parent type can be found. Specifying `@cs_resolve` binds a field to resolve in exactly one subgraph. Unless it is a root type, the enclosing type **must** be [portable](#portability) to the specified subgraph (it must have `@cs_key`s specified for that graph).
 
 <view-of src=photos.graphql#User...Image
-  title='Using <code>@compose_resolve</code> to bind subgraph resolvers'
-  highlight='line => line.includes("@compose_resolve")'></view-of>
+  title='Using <code>@cs_resolve</code> to bind subgraph resolvers'
+  highlight='line => line.includes("@cs_resolve")'></view-of>
 
 Fields on root types must always be bound to a subgraph:
 
 <view-of src=photos.graphql#Query
-  title='<code>@compose_resolve</code> on root fields'
-  highlight='line => line.includes("@compose_resolve")'></view-of>
+  title='<code>@cs_resolve</code> on root fields'
+  highlight='line => line.includes("@cs_resolve")'></view-of>
 
-### `@compose_error`
+### `@cs_error`
 
-<view-of src=photos.graphql#@compose_error
-  title='<code>@compose_error</code> declaration' class=no-linum></view-of>
+<view-of src=photos.graphql#@cs_error
+  title='<code>@cs_error</code> declaration' class=no-linum></view-of>
 
-`@compose_error` flags errors that occurred during composition. It's useful for instances where a composer encounters errors but still wants to produce output. It may be used in conjunction with the [`compose_Never`](#compose_never) type to indicate that a field cannot be resolved, along with the reason it cannot be resolved.
+`@cs_error` flags errors that occurred during composition. It's useful for instances where a composer encounters errors but still wants to produce output. It may be used in conjunction with the [`cs_Never`](#cs_never) type to indicate that a field cannot be resolved, along with the reason it cannot be resolved.
 
 
 <view-of src=photos.graphql#User.favorite
-  title='Using <code>compose_Never</code> and <code>@compose_error</code> declaration'></view-of>
+  title='Using <code>cs_Never</code> and <code>@cs_error</code> declaration'></view-of>
 
 ## Data Model
 
-### Realized types
+```mermaid
+#::[The router fan out an incoming query into one or more subgraph queries]
+graph LR
+  incoming(Incoming Query)-->router(Router)
+  router-->o1(Outbound Query 1)-->s1(subgraph A)
+  router-->o2(Outbound Query 2)-->s2(subgraph B)
+  router-->o3(Outbound Query 3)-->s3(subgraph C)
+```
 
-A type is *realized* wherever a resolver from a particular *subgraph* returns that type. We use the notation `subgraph::Type` to represent `Type` realized by `subgraph` and `subgraph::Type.field` to represent the resolver for `Type.field` within `subgraph`.
+### Selection set realization
+
+The role of the router is to break apart an incoming query against the published schema into outbound queries against subgraph schemas.
+
+A *realized selection set* is a selection within an inbound query, with particular type bounds, which will be issued against a particular subgraph. We denote the realized type of this selection set as `subgraph::(Type Bounds)`. Within this section, we use the special subgraph name `self` to refer to the exported composed schema.
+
+Within a realized selection set, the router can only query fields known to the realized subgraph and valid within the type bounds. As usual with GraphQL execution, a selection on more specific bounds can be acquired by emitting an inline fragment (`...on Subtype`). Porting to a different subgraph—to acquire bounds specific to that subgraph, including fields bound to that subgraph—requires a [portal query](#portal-query).
 
 ```graphql
 #::[Query with resolvers and realized types]
-query {          # resolver                    | realizes
-                  # ----------------------------|--------------
-  rockets {      # rockets::Query.rockets     -> rockets::Rocket
-    captain {    # rockets::Rocket.astronaut  -> rockets::Astronaut
-      name       # astronauts::Astronaut.name -> String
-      rocket {   # rockets::Astronaut.rocket  -> rockets::Rocket
-        id       # rockets::Rocket.id         -> ID
+               # resolver              | realizes
+               # --------------------------               
+query {        # (root)                -> self::Query
+    albums {   # albums::Query.albums  -> albums::Album
+      user {   # albums::Album.user    -> albums::User
+        name   # auth::User.name       -> String
       }
     }
   }
-
 }
 ```
 
-These distinctions are immaterial to the client. As far as clients are concerned, all selections on `Rocket` are the same.
-
-This illusion is maintained by the router, which must break incoming queries into subqueries. In the example above, the path `rockets.captain` is resolved by the `rockets::Rocket.astronaut` resolver, so its selection set is realized as a `rockets::Astronaut`. However, there is no `name` field for `rockets::Astronaut`—instead, the only resolver for `Astronaut.name` is `astronauts::Astronaut.name`. To process this query, the router must [port](#portability) a `rockets::Astronaut` to an `astronauts::Astronaut` via an `_entities` query.
+This query requires one portal: `name` is available on `self::User` but not on `albums::User`. Instead, it is provided only by `auth::User`. Since `name` is selected within an `albums::User`, the router must use a [portal](#portal-query) to acquire a selection on `auth::User` and resolve the field.
 
 ### Free / Bound fields
-Free fields can be resolved by any subgraph, bound fields can only be resolved by the subgraph they're bound to.
+Free fields can be resolved by any subgraph which can realize a selection on the parent type. Bound fields can only be resolved by the subgraph they're bound to, which may require [porting](#portability) the selection set between graphs.
 
 ### Portability
-A type is *portable to* a subgraph if it has a `@compose_key` for that subgraph.
+A type is *portable to* a subgraph if it has one or more [`@cs_key`s](#cs_key) defined for that subgraph.
 
-Incoming queries cross subgraph boundaries (and thus require "porting") wherever they select a field that is not resolvable by the subgraph of the realized type from which they are selected. In the above example, selecting `rockets.captain.name` crosses such a boundary, since `rockets.captain` has the realized type `rockets::Astronaut` and `captain.name` is only resolvable by `astronauts::Astronaut.name`.
+```graphql
+#::[A query crossing subgraph boundaries]
+query {
+  me {
+    albums {
+      user {
+        name
+      }
+    }
+  }
+}
+```
+
+Incoming queries cross subgraph boundaries require "porting" wherever they select a field that is not resolvable by the subgraph of the realized type from which they are selected. In the above example, selecting `me.albums.user.name` crosses such a boundary, since `albums.user` is a selection on `albums::User` and `user.name` is only resolvable by `auth::User.name`.
+
+To resolve this query, `albums::User` must be *portable* to `auth::User`. That is, given a selection on `albums::User`, there must be some way to arrive at a selection on `auth::User`.
 
 If fields have multiple bound resolvers, routers **should** select the resolver which does not require crossing subgraph boundaries, if possible.
 
-If crossing subgraph boundaries is unavoidable, routers *must* use a [federated _entities query](https://www.apollographql.com/docs/federation/federation-spec/#query_entities) to re-enter the type in the destination subgraph.
-  
+If crossing subgraph boundaries is unavoidable, routers *must* use a [portal query](#portal-query) to re-enter the type in the destination subgraph.
+
+### Portal query
+In order to acquire a selection set on a entity within a subgraph, routers may issue a portal query to the subgraph:
+
+```graphql
+#::[Portal query]
+query {
+  _entities(representations: $representations) {
+    # ...selections...
+  }
+}
+```
+
+`representations` **must** be a list of input objects, each of which consist of the `__typename` of the object type or interface along with the result of fetching one of that subgraph's `key` fragments for the type.
+
+```graphql
+#::[Portal query with representations]
+query {
+  _entities(representations: [
+    { __typename: "Image", url: "http://example.com/1.png"},
+    { __typename: "Image", url: "http://example.com/2.png"},
+  ]) {
+    # ...selection on Image...
+  }
+}
+```
+
+The `_entities` resolver need not be explicitly defined in the subgraph schema. If it is defined, its specified types are ignored—it is assumed that the resolver is capable of resolving objects and interfaces from any key specified within the `compose`d schema.
 
 ## Validations
 ### validate all fields resolvable

@@ -1,87 +1,104 @@
 directive @using(spec: using_URL!)
   on SCHEMA
 
-directive @compose_key(graph: compose_Graph!, sel: compose_SelectionSet!)
-  repeatable on OBJECT
+schema @using(spec: "https://specs.apollo.dev/cs/v1") {
+  query: Query
+}
 
-directive @compose_resolve(
-  graph: compose_Graph!,
-  requires: compose_SelectionSet,
-  provides: compose_SelectionSet)
+directive @cs_key(graph: cs_Graph!, key: cs_SelectionSet!)
+  repeatable on FRAGMENT_DEFINITION
+
+directive @cs_resolve(
+  graph: cs_Graph!,
+  requires: cs_SelectionSet,
+  provides: cs_SelectionSet)
   on FIELD_DEFINITION
 
-directive @compose_error(
-  graphs: [compose_Graph!],
+directive @cs_error(
+  graphs: [cs_Graph!],
   message: String)
     on OBJECT
      | INTERFACE
      | UNION
      | FIELD_DEFINITION
 
-directive @compose_link(to: compose_OutboundLink!)
+directive @cs_link(to: cs_OutboundLink!)
   on ENUM_VALUE
 
-input compose_OutboundLink {
-  http: compose_OutboundLinkHTTP
+input cs_OutboundLink {
+  http: cs_OutboundLinkHTTP
 }
 
-input compose_OutboundLinkHTTP {
-  url: compose_URL
+input cs_OutboundLinkHTTP {
+  url: cs_URL
 }
 
-enum compose_Graph {
-  AUTH @compose_link(to: {
+enum cs_Graph {
+  AUTH @cs_link(to: {
     http: { url: "https://auth.api.example.com" }
   }),
-  ALBUMS @compose_link(to: {
+  ALBUMS @cs_link(to: {
     http: { url: "https://albums.api.example.com" }
   }),
-  IMAGES @compose_link(to: {
+  IMAGES @cs_link(to: {
     http: { url: "https://images.api.example.com" }
   }),
 }
 
-scalar compose_Never
-  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#compose_never")
+scalar cs_Never
+  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#cs_never")
 
-scalar compose_SelectionSet
-  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#compose_selectionset")
+scalar cs_SelectionSet
+  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#cs_selectionset")
 
-scalar compose_URL
-  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#compose_url")
-
-
-schema @using(spec: "https://specs.apollo.dev/compose/v1") {
-  query: Query
-}
+scalar cs_URL
+  @specifiedBy(url: "https://specs.apollo.dev/compose/v1#cs_url")
 
 type Query {
-  me: User        @compose_resolve(graph: AUTH)
-  images: [Image] @compose_resolve(graph: IMAGES)
+  me: User        @cs_resolve(graph: AUTH)
+  images: [Image] @cs_resolve(graph: IMAGES)
 }
 
-type User
-  @compose_key(graph: AUTH, repr: "{ id }")
-  @compose_key(graph: ALBUMS, repr: "{ id }") {
-  id: ID            @compose_resolve(graph: AUTH)
-  name: String      @compose_resolve(graph: AUTH)
-  albums: [Album!]  @compose_resolve(graph: ALBUMS)
-  favorite: compose_Never @compose_error(graphs: [ALBUMS, IMAGES],
-                                         message: "Field types conflict")
+type User {
+  id: ID              @cs_resolve(graph: AUTH)
+  name: String        @cs_resolve(graph: AUTH)
+  albums: [Album!]    @cs_resolve(graph: ALBUMS)
+  favorite: cs_Never  @cs_error(graphs: [ALBUMS, IMAGES],
+                                message: "Field types conflict")
+}
 
+fragment User_id on User
+ @cs_key(graph: AUTH)
+ @cs_key(graph: ALBUMS) {
+  id
 }
 
 type Album {
-  user: User        @compose_resolve(graph: ALBUMS)
-  photos: [Image!]  @compose_resolve(graph: ALBUMS)
+  user: User        @cs_resolve(graph: ALBUMS)
+  photos: [Image!]  @cs_resolve(graph: ALBUMS)
 }
 
-type Image
-  @compose_key(graph: IMAGE, repr: "{ url }")
-  @compose_key(graph: ALBUMS, repr: "{ url }") {
-  url: Url          @compose_resolve(graph: IMAGES)
-  type: MimeType    @compose_resolve(graph: IMAGES)
-  albums: [Album!]  @compose_resolve(graph: ALBUMS)
+type Image {
+  url: Url          @cs_resolve(graph: IMAGES)
+  type: MimeType    @cs_resolve(graph: IMAGES)
+  albums: [Album!]  @cs_resolve(graph: ALBUMS)
+}
+
+fragment Image_url on Image
+  @cs_key(graph: IMAGE)
+  @cs_key(graph: ALBUMS)
+{
+  url
+}
+
+
+# input Image_key_url {
+#   __typename: String
+#   url: Url
+# }
+
+query albums_Image_by_url($representations: Url) @partial {
+  _entities(representations: [{ __typename: "Image", url: $url }])
 }
 
 scalar Url
