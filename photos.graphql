@@ -1,7 +1,7 @@
 directive @using(spec: using_URL!)
   on SCHEMA
 
-directive @compose_key(graph: compose_Graph!, repr: compose_SelectionSet!)
+directive @compose_key(graph: compose_Graph!, sel: compose_SelectionSet!)
   repeatable on OBJECT
 
 directive @compose_resolve(
