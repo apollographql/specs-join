@@ -1,11 +1,11 @@
 directive @using(spec: using_URL!)
   on SCHEMA
 
-schema @using(spec: "https://specs.apollo.dev/cs/v1") {
+schema @using(spec: "https://specs.apollo.dev/cs/v1.0") {
   query: Query
 }
 
-directive @cs_key(graph: cs_Graph!, key: cs_SelectionSet!)
+directive @cs_key(graph: cs_Graph!)
   repeatable on FRAGMENT_DEFINITION
 
 directive @cs_resolve(
@@ -46,13 +46,13 @@ enum cs_Graph {
 }
 
 scalar cs_Never
-  @specifiedBy(url: "https://specs.apollo.dev/cs/v1#cs_never")
+  @specifiedBy(url: "https://specs.apollo.dev/cs/v1.0#cs_never")
 
 scalar cs_SelectionSet
-  @specifiedBy(url: "https://specs.apollo.dev/cs/v1#cs_selectionset")
+  @specifiedBy(url: "https://specs.apollo.dev/cs/v1.0#cs_selectionset")
 
 scalar cs_URL
-  @specifiedBy(url: "https://specs.apollo.dev/cs/v1#cs_url")
+  @specifiedBy(url: "https://specs.apollo.dev/cs/v1.0#cs_url")
 
 type Query {
   me: User        @cs_resolve(graph: AUTH)
@@ -85,6 +85,11 @@ type Image {
 }
 
 fragment Image_url on Image
+  # This fragment is an Image key within the IMAGE
+  # and ALBUMS graphs.
+  #
+  # The fragment name is arbitrary. The only constraint
+  # is that it must be unique within the document.
   @cs_key(graph: IMAGE)
   @cs_key(graph: ALBUMS)
 {

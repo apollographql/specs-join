@@ -50,7 +50,7 @@ A `compose`d schema is intended to be a single artifact which can power a graph 
 ```mermaid
 #::[Composed schemas are generally machine-generated]
 graph LR
-  s1(auth.graphql)-->compiler(Compiler)
+  s1(auth.graphql)-->compiler(Composer)
   s2(images.graphql)-->compiler
   s3(albums.graphql)-->compiler
   compiler-->CSDL(Composed Schema: photos.graphql)
@@ -125,11 +125,11 @@ flowchart TB
       schemaC([schema C])
       endpointC([endpoint C])
     end
-    subgraph Producer
+    subgraph "Producer_________________________________________________________"
       Composer
     end
     CSDL([CSDL])
-    subgraph Consumer
+    subgraph "Consumer__________________________________"
       Router
     end    
     A-->Composer
@@ -220,7 +220,7 @@ input exampleOrg_OutboundGSLB {
 enum cs_Graph {
   AUTH @cs_link(to: {
     exampleOrg_gslb: {
-      service: "gaia/auth-gql-prod", protocol_version: 1
+      service: "gaia/auth-gql-prod", protocolVersion: 1
     }
   }),
   MAPS @cs_link(to: {
@@ -268,7 +268,7 @@ All legal selection set features are allowed. That includes aliases, field argum
   class=no-linum
 ></view-of>
 
-A [URL](https://www.w3.org/Addressing/URL/url-spec.html). Used by [`@cs_outbound`](#cs_outbound).
+A [URL](https://www.w3.org/Addressing/URL/url-spec.html). Used by [`@cs_link`](#cs_link).
 
 ### cs_Never
 
