@@ -369,9 +369,9 @@ A *realized selection set* is a selection within an inbound query, with particul
 Within a realized selection set, the router can only query fields known to the realized subgraph and valid within the type bounds. As usual with GraphQL execution, a selection on more specific bounds can be acquired by emitting an inline fragment (`...on Subtype`). Porting to a different subgraph—to acquire bounds specific to that subgraph, including fields bound to that subgraph—requires a [portal query](#portal-query).
 
 ```graphql
-#::[Query with resolvers and realized types]
+#::[Query with resolvers and realized selection sets]
                # resolver              | realizes
-               # --------------------------               
+               # ---------------------------------------               
 query {        # (root)                -> self::Query
     albums {   # albums::Query.albums  -> albums::Album
       user {   # albums::Album.user    -> albums::User
