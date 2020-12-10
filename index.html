@@ -75,7 +75,7 @@ This document uses [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) guidance reg
 
 ### What this document isn't
 
-This document specifies only the structure and semantics of `compose`d schemas. It's expected that the `compose`d schema will be the output of a compilation process which composes subgraph schemas. The mechanicss of that process are not specified normatively here; a suggestion is provided in [Appendix: Basic Composition Algorithm](#appendix-suggested-composition-algorithm). Conforming implementations may choose any approach they like, so long as the result conforms to the requirements of this document.
+This document specifies only the structure and semantics of `compose`d schemas. It's expected that the `compose`d schema will be the output of a compilation process which composes subgraph schemas. The mechanics of that process are not specified normatively here; a suggestion is provided in [Appendix: Basic Composition Algorithm](#appendix-suggested-composition-algorithm). Conforming implementations may choose any approach they like, so long as the result conforms to the requirements of this document.
 
 ## Example: Photo Library
 
@@ -90,7 +90,7 @@ We'll refer to this example of a photo library throughout the document:
 
 The meaning of the `@cs_` directives is explored in the [Directives](#directives) section.
 
-The example composes three schemas:
+The example represents **one way** to compose three input schemas, based on [federated composition](https://www.apollographql.com/docs/federation/federation-spec/). These schemas are provided for purposes of illustration only. This spec places no normative requirements on composer input. It does not require that subgraphs use federated composition directives, and it does not place any requirements on *how* the composer builds a `compose`d schema, except to say that the resulting schema must be a valid `compose`d schema document.
 
 [auth](./albums.graphql) provides the `User` type and `Query.me`.
 
@@ -152,9 +152,9 @@ flowchart TB
 **Composers** or **compilers** are producers which compose subgraph schemas into a `compose`d schema. This document places no particular requirements on the composition algorithm, except that it must produce valid `compose`d schemas.
 
 <a namme=def-router></a>
-**Routers** are consumers which serve a composed schema as a GraphQL endpoint.
-  - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch.
-  - Routers **may**—and typically will—omit `compose`d schema elements from the schema they present to clients via introspection (`cs_Graph`, for example, **may** and often will be omitted)
+**Routers** are consumers which serve a composed schema as a GraphQL endpoint. *This definition is non-normative.*
+  - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch, nor does it attempt to normatively separate routers from other `compose`d schema consumers.
+  - Routers will often `compose`d schema elements from the schema they present to clients via introspection (`cs_Graph`, for example, will typically be omitted)
 
 <a name=def-endpoint></a>
 **Endpoints** are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
@@ -352,7 +352,7 @@ Fields on root types must always be bound to a subgraph:
 ## Data Model
 
 ```mermaid
-#::[The router fan out an incoming query into one or more subgraph queries]
+#::[The router separates an incoming query into one or more subgraph queries]
 graph LR
   incoming(Incoming Query)-->router(Router)
   router-->o1(Outbound Query 1)-->s1(subgraph A)
