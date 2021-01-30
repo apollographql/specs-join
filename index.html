@@ -1,13 +1,13 @@
 <!doctype html>
 <script src=/boot.js></script>
-<title>Composing Schemas</title>
+<title>The @join Directive</title>
 
 <div id=view>
 <main markdown>
 
 <header>
-  <h1>Composing Schemas</h1>
-  <h2>schema elements for describing compositions of subgraphs</h2>
+  <h1 markdown>the `@join` directive</h1>
+  <h2>for defining schemas which join multiple subgraphs</h2>
   <table class=spec-md>
     <tr>
       <td>status</td>
@@ -35,34 +35,22 @@
 *This section is non-normative.*
 
 ```mermaid
-#::[Schema composed from multiple subgraphs.]
+#::[Schema joining multiple subgraphs]
 graph LR
-  s1(auth.graphql)-->CSDL(Composed Schema: photos.graphql)
-  s2(images.graphql)-->CSDL
-  s3(albums.graphql)-->CSDL
-  style CSDL fill:none,stroke:fuchsia,color:fuchsia;
+  s1(auth.graphql)-->core(joined schema: photos.graphql)
+  s2(images.graphql)-->core
+  s3(albums.graphql)-->core
+  style core fill:none,stroke:fuchsia,color:fuchsia;
 ```
 
-This document lays out **schema elements** to describe [GraphQL schemas](https://spec.graphql.org/) which are **`compose`d** from one or more other GraphQL schemas. (**Schema elements** comprise any item in a GraphQL schema—types, input types, directives, etc.)
+This document defines the [`@join` directive](#join-directive-forms) and [associated types](#associated-types) to describe [core schemas](/core/drafts/pre-0) which **join** multiple **subgraph** schemas into a single **supergraph**.
 
-A `compose`d schema is intended to be a single artifact which can power a graph router. It declares the composed schema and annotates it with directives that allow the router to disassemble input queries and dispatch them to subgraphs.
+This specification provides machinery to:
+- define [subgraphs](#def-subgraph) with the required [`join__Graph`](#join__Graph) enum
+- assign fields to subgraphs
+- declare additional data required and provided by subgraph field resolvers
 
-```mermaid
-#::[Composed schemas are generally machine-generated]
-graph LR
-  s1(auth.graphql)-->compiler(Composer)
-  s2(images.graphql)-->compiler
-  s3(albums.graphql)-->compiler
-  compiler-->CSDL(Composed Schema: photos.graphql)
-  style compiler fill:none,stroke:fuchsia,color:fuchsia;
-```
-
-`Compose`d schemas are generally assumed to be machine-generated from source schemas. Design decisions lean towards making them easy to consume—explicitness is favored over implicitness, even where this may become repetitive.
-
-Within composed schemas, one can:
-- define [subgraphs](#def-subgraph) and bind them to [endpoints](#def-endpoint) (with the required [`cs_Graph`](#cs_Graph) type and [`@cs_outbound`](#cs_outbound) directive)
-- assign fields to subgraphs (with [`@cs_resolve`](#cs_resolve))
-- declare additional data required and provided by subgraph field resolvers (with [`@cs_key`](#cs_key), and [`@cs_resolve`](#cs_resolve))
+Core schemas using the `@join` directive are referred to as **join schemas** within this document.
 
 ## How to read this document
 
@@ -75,7 +63,7 @@ This document uses [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) guidance reg
 
 ### What this document isn't
 
-This document specifies only the structure and semantics of `compose`d schemas. It's expected that the `compose`d schema will be the output of a compilation process which composes subgraph schemas. The mechanics of that process are not specified normatively here; a suggestion is provided in [Appendix: Basic Composition Algorithm](#appendix-suggested-composition-algorithm). Conforming implementations may choose any approach they like, so long as the result conforms to the requirements of this document.
+This document specifies only the structure and semantics of join schemas. It's expected that the join schemas will be the output of a compilation process which composes subgraph schemas. The mechanics of that process are not specified normatively here; a suggestion is provided in [Appendix: Basic Composition Algorithm](#appendix-suggested-composition-algorithm). Conforming implementations may choose any approach they like, so long as the result conforms to the requirements of this document.
 
 ## Example: Photo Library
 
@@ -88,9 +76,9 @@ We'll refer to this example of a photo library throughout the document:
   title='Photos library composed schema'
 ></view-of>
 
-The meaning of the `@cs_` directives is explored in the [Directives](#directives) section.
+The meaning of the `@join` directives is explored in the [Directives](#directives) section.
 
-The example represents **one way** to compose three input schemas, based on [federated composition](https://www.apollographql.com/docs/federation/federation-spec/). These schemas are provided for purposes of illustration only. This spec places no normative requirements on composer input. It does not require that subgraphs use federated composition directives, and it does not place any requirements on *how* the composer builds a `compose`d schema, except to say that the resulting schema must be a valid `compose`d schema document.
+The example represents **one way** to compose three input schemas, based on [federated composition](https://www.apollographql.com/docs/federation/federation-spec/). These schemas are provided for purposes of illustration only. This spec places no normative requirements on composer input. It does not require that subgraphs use federated composition directives, and it does not place any requirements on *how* the composer builds a join schema, except to say that the resulting schema must be a valid join schema document.
 
 [auth](./albums.graphql) provides the `User` type and `Query.me`.
 
@@ -125,229 +113,113 @@ flowchart TB
       schemaC([schema C])
       endpointC([endpoint C])
     end
-    subgraph "Producer_________________________________________________________"
+    subgraph "Producer ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
       Composer
     end
-    CSDL([CSDL])
-    subgraph "Consumer__________________________________"
+    joinSchema([Join Schema])
+    subgraph "Consumer ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
       Router
     end    
     A-->Composer
     B-->Composer
     C-->Composer
-    Composer-->CSDL
-    CSDL-->Router
+    Composer-->joinSchema
+    joinSchema-->Router
     Router-->published([Published Schema])
     published-->Clients
     Clients-->Router
 ```
 
 <a name=def-producer></a>
-**Producers** generate `compose`d schemas. This spec places requirements on `compose`d schema producers.
+**Producers** generate join schemas. This spec places requirements on join schema producers.
 
 <a name=def-consumer></a>
-**Consumers** consume `compose`d schemas. This spec places requirements on `compose`d schema consumers.
+**Consumers** consume join schemas. This spec places requirements on join schema consumers.
 
 <a name=def-composer></a>
-**Composers** or **compilers** are producers which compose subgraph schemas into a `compose`d schema. This document places no particular requirements on the composition algorithm, except that it must produce valid `compose`d schemas.
+**Composers** or **compilers** are producers which compose subgraph schemas into a join schema. This document places no particular requirements on the composition algorithm, except that it must produce valid join schemas.
 
 <a namme=def-router></a>
 **Routers** are consumers which serve a composed schema as a GraphQL endpoint. *This definition is non-normative.*
-  - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch, nor does it attempt to normatively separate routers from other `compose`d schema consumers.
-  - Routers will often `compose`d schema elements from the schema they present to clients via introspection (`cs_Graph`, for example, will typically be omitted)
+  - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch, nor does it attempt to normatively separate routers from other join schema consumers.
+  - Routers will often join schema elements from the schema they present to clients via introspection (`join__Graph`, for example, will typically be omitted)
 
 <a name=def-endpoint></a>
 **Endpoints** are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
 
 <a name=def-subgraph></a>
-**Subgraphs** are the GraphQL schemas which were composed to form the `compose`d schema. They are declared as values on the special `cs_Graph` enum. Link transport data is provided with the `@cs_link` directive.
+**Subgraphs** are the GraphQL schemas which were composed to form the join schema. They are declared as values on the special `join__Graph` enum.
 
-This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to be `compose`d or follow this spec in any way; neither is it an error for them to do so. Composers **may** place additional requirements on subgraph schemas to aid in composition; composers **should** document any such requirements.
+This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to be join schemas or to follow this spec in any way; neither is it an error for them to do so. Composers **may** place additional requirements on subgraph schemas to aid in composition; composers **should** document any such requirements.
 
 ## Structure
 
-A `compose`d schema must be a valid [GraphQL schema definition language](https://spec.graphql.org/draft/#sec-Type-System) document.
-
-Certain GraphQL features are restricted within `compose`d schemas. In particular, **extensions are forbidden**. Producers **must** not generate `compose`d schemas which contain type or interface extensions. Nevertheless, consumers **should** be prepared to parse any valid GraphQL SDL. A `compose`d schema document which contains type extensions or any other disallowed constructs **should** trigger validation errors after parsing.
-
-This spec introduces a suite of types and directives. All schema elements introduced in this spec carry a `cs_` prefix, as recommended in [the GraphQL specification](https://spec.graphql.org/draft/#note-ca863).
-
-### Declare use of this spec
-
-`Compose`d schemas **must** contain a `schema` declaration with a [`@using` directive](/using/draft/pre-0).
+Schemas using `@join` **must** be valid [core schema documents](/core/draft/pre-0) with `@core(using:)` directives referencing this specification along with any transitively referenced specifications.
 
 <view-of src=photos.graphql#schema
   title='@using directive declaring a composed schema'
 ></view-of>
 
-### `Compose`d schemas must not contain `TypeSystemExtension`s
+## Associated Types
 
-`Compose`d schemas cannot contain extensions—you cannot `extend type` or `extend interface` within a `compose`d schema. Producers **must** generate documents which contain only GraphQL [`TypeSystemDefinition`s](http://spec.graphql.org/draft/#sec-Type-System) and [`ExecutableDefinition`s](http://spec.graphql.org/draft/#Document). Consumers **should** ignore any `TypeSystemExtension`s they encounter within a `compose`d schema.
+### `enum join__Graph`
+Documents **must** define a `join__Graph` enum. Each enum value defines a subgraph.
 
-## Enums
-
-`compose`d schemas **must** include the definitions of any enums they use.
-
-### `cs_Graph`
-A CSDL document **must** define a `cs_Graph` enum. Each enum value defines a subgraph. Each value **must** be annotated with a `@cs_link` directive specifying how to connect to the subgraph.
-
-<view-of src=photos.graphql#cs_Graph
-  title='Using cs_Graph to define endpoints'
+<view-of src=photos.graphql#join__Graph
+  title='Using join__Graph to define endpoints'
 ></view-of>
 
-The `cs_Graph` enum is used as input to `compose`d schema directives which link fields and types to subgraphs.
-
-## Input Object Types
-
-`compose`d schemas **must** include definitions of any `input`s they use.
-
-`input`s do not have to be specified exactly as they are in this spec—they need only be *compatible*. In particular, a `compose`d schema may:
-  - **Change nullable fields to non-nullable,** indicating that this `compose`d schema adheres to a stricter contract than required.
-  - **Omit nullable fields** which are never referenced
-  - **Introduce new fields.** Fields added to an `input` **must** be prefixed with `someVendorPrefix_`. For example, a composed schema might introduce a custom field on `cs_OutboundLink` to hold internal service discovery information:
-
-```graphql
-#::[Using a custom field in `cs_OutboundLink`]
-input cs_OutboundLink {
-  exampleOrg_gslb: exampleOrg_OutboundGSLB
-}
-
-input exampleOrg_OutboundGSLB {
-  service: String
-  protocolVersion: Int = 2
-}
-
-enum cs_Graph {
-  AUTH @cs_link(to: {
-    exampleOrg_gslb: {
-      service: "gaia/auth-gql-prod", protocolVersion: 1
-    }
-  }),
-  MAPS @cs_link(to: {
-    exampleOrg_gslb: { service: "geo/prod" }
-  })
-}
-```
-
-### cs_OutboundLink
-<view-of src=photos.graphql#cs_OutboundLink
-  title='Definition of cs_OutboundLink'
-  class=no-linum></view-of>
-
-Provides information about an **outbound link**—a connection to a subgraph across which operations can be executed.
-
-### cs_OutboundLinkHTTP
-<view-of src=photos.graphql#cs_OutboundLinkHTTP
-  title='Definition of cs_OutboundLinkHTTP'
-  class=no-linum></view-of>
-
-Provides HTTP-specific configuration for outbound links. **TK: Currently, this is just a URL, but this is the place where we could do a lot more: headers, etc. ~ak**
-
+The `join__Graph` enum is used as input to `@join` directives which link fields and types to subgraphs.
 
 ## Scalars
 
-`compose`d schemas **must** include definitions of any scalars they use. Producers **should** include the `@specifiedBy` directive, but it is not mandatory.
+Documents **must** include definitions of any scalars they use. Producers **should** include the `@specifiedBy` directive, but it is not mandatory.
 
-### `cs_SelectionSet`
+### join__Never
 
-<view-of src=photos.graphql#cs_SelectionSet
-  title='Definition of cs_SelectionSet'
+<view-of src=photos.graphql#join__Never
+  title='Definition of join__Never'
   class=no-linum
 ></view-of>
 
-A GraphQL selection set represented with the same syntax as defined in [the GraphQL SDL](https://spec.graphql.org/draft/#sec-Selection-Sets).
-
-Note: Unlike the federation `_FieldSet` scalar, a `cs_SelectionSet` must parse as a GraphQL selection set, so the selections must be surrounded by braces.
-
-All legal selection set features are allowed. That includes aliases, field arguments, directives, and inline fragments. Named fragment spreads are syntactically valid, but meaningless, as there is nowhere to define named fragments; future versions of this spec may change this.
-
-### `cs_URL`
-
-<view-of src=photos.graphql#cs_URL
-  title='Definition of cs_URL'
-  class=no-linum
-></view-of>
-
-A [URL](https://www.w3.org/Addressing/URL/url-spec.html). Used by [`@cs_link`](#cs_link).
-
-### cs_Never
-
-<view-of src=photos.graphql#cs_Never
-  title='Definition of cs_Never'
-  class=no-linum
-></view-of>
-
-The `cs_Never` scalar is used to indicate the type of a field which **cannot be resolved**. This is typically due to a composition error. Producers **should** provide more specific error information with a `@cs_error` directive on the relevant field.
+The `join__Never` scalar is used to indicate the type of a field which **cannot be resolved**. This is typically due to a composition error. Producers **should** provide more specific error information with a `@error` directive on the relevant field.
 
 <view-of src=photos.graphql#User.favorite
-  title='Using <code>cs_Never</code> and <code>@cs_error</code> to mark a field error'
+  title='Using <code>join__Never</code> and <code>@error</code> to mark a field error'
 ></view-of>
 
-## Directives
+## `@join` directive forms
 
-`compose`d schema **must** include the definitions of all directives they use. Directives from this spec **must** be defined exactly as they are specified here. (This ensures that `compose`d schemas pass standard validations, even if those validators do not know of this spec.)
+### `@join(graph: join__Graph!, key: ref__Fragment!) repeatable on OBJECT`
 
-### `@cs_key`
-<view-of src=photos.graphql#@cs_key
-  title='Definition of cs_key'
-  class=no-linum
-></view-of>
-
-Define an entity key.
-
-`@cs_key` is applied to a fragment to mark that fragment as an entity key.
+Join a type to a subgraph with the provided entity key.
 
 Keys will be passed as `representations` within a [portal query](#portal-query) to [port](#portability) a selection set between subgraphs.
 
-<view-of src=photos.graphql#Image_url
-  title='Using <code>@cs_key</code> to specify subgraph keys'
+<view-of src=photos.graphql#local__Image_url
+  title='Using <code>@join(graph:,key:)</code> to specify subgraph keys'
 ></view-of>
 
-Multiple `@cs_key`s can be provided for different graphs, or for the same graph.
+Multiple `@join`s can be specified for different subgraphs. It is an error to `@join` an object against the same subgraph multiple times.
 
-### `@cs_link`
+### `@join(graph: join__Graph!, requires: ref__Fragment!, provides: ref__Fragment!) on FIELD_DEFINITION`
 
-<view-of src=photos.graphql#@cs_link...cs_OutboundLinkHTTP
-  title='Definition of cs_link and related inputs'
-  class=no-linum
-></view-of>
+Join a field with a particular subgraph.
 
-`@cs_link` declares links to other graphs defined within `cs_Graph`. For example, `@cs_link` is where you specify HTTP endpoint URLs for subgraph services.
+The parent type **MUST** be `@join`ed with 
 
-![Using `@cs_link` to specity subgraph connections](view:photos.graphql#cs_Graph)
-
-This directive is only valid on enum values within the required `cs_Graph` enum type.
-
-### `@cs_resolve`
-
-<view-of src=photos.graphql#@cs_resolve
-  title='Definition of <code>@cs_resolve</code>'
-  class=no-linum></view-of>
-
-Bind a subgraph resolver to this field.
-
-Any field definitions without a `@cs_resolve` directive are *free*. That is, the `compose`d schema asserts they can be resolved by any subgraph in which the parent type can be found. Specifying `@cs_resolve` binds a field to resolve in exactly one subgraph. Unless it is a root type, the enclosing type **must** be [portable](#portability) to the specified subgraph (it must have `@cs_key`s specified for that graph).
+Any field definitions without a `@join` directive are assumed to be resolvable in any subgraph which `@join`s the parent type.
 
 <view-of src=photos.graphql#User...Image
-  title='Using <code>@cs_resolve</code> to bind subgraph resolvers'
-  highlight='line => line.includes("@cs_resolve")'></view-of>
+  title='Using <code>@join</code> to join fields to subgraphs'
+  highlight='line => line.includes("@join")'></view-of>
 
 Fields on root types must always be bound to a subgraph:
 
 <view-of src=photos.graphql#Query
-  title='<code>@cs_resolve</code> on root fields'
-  highlight='line => line.includes("@cs_resolve")'></view-of>
+  title='<code>@join</code> on root fields'
+  highlight='line => line.includes("@join")'></view-of>
 
-### `@cs_error`
-
-<view-of src=photos.graphql#@cs_error
-  title='<code>@cs_error</code> declaration' class=no-linum></view-of>
-
-`@cs_error` flags errors that occurred during composition. It's useful for instances where a composer encounters errors but still wants to produce output. It may be used in conjunction with the [`cs_Never`](#cs_never) type to indicate that a field cannot be resolved, along with the reason it cannot be resolved.
-
-
-<view-of src=photos.graphql#User.favorite
-  title='Using <code>cs_Never</code> and <code>@cs_error</code> to mark an error'></view-of>
 
 ## Data Model
 
@@ -388,7 +260,7 @@ This query requires one portal: `name` is available on `self::User` but not on `
 Free fields can be resolved by any subgraph which can realize a selection on the parent type. Bound fields can only be resolved by the subgraph they're bound to, which may require [porting](#portability) the selection set between graphs.
 
 ### Portability
-A type is *portable to* a subgraph if it has one or more [`@cs_key`s](#cs_key) defined for that subgraph.
+A type is *portable to* a subgraph if it has a key defined for that subgraph.
 
 ```graphql
 #::[A query crossing subgraph boundaries]
@@ -423,7 +295,7 @@ query {
 }
 ```
 
-`representations` **must** be a list of input objects, each of which consist of the `__typename` of the object type or interface along with the result of fetching one of that subgraph's `key` fragments for the type.
+`representations` **must** be a list of input objects, each of which consist of the `__typename` of the object type or interface along with the result of fetching one that subgraph's `key` fragment for the type.
 
 ```graphql
 #::[Portal query with representations]
@@ -437,7 +309,7 @@ query {
 }
 ```
 
-The `_entities` resolver need not be explicitly defined in the subgraph schema. If it is defined, its specified types are ignored—it is assumed that the resolver is capable of resolving objects and interfaces from any key specified within the `compose`d schema.
+The `_entities` resolver need not be explicitly defined in the subgraph schema. If it is defined, its specified types are ignored—it is assumed that the resolver is capable of resolving objects and interfaces from any key specified within the join schema.
 
 ## Validations
 ### validate all fields resolvable

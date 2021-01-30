@@ -1,97 +1,90 @@
-directive @using(spec: using_URL!)
-  on SCHEMA
 
-schema @using(spec: "https://specs.apollo.dev/cs/v1.0") {
+schema
+  @core(using: "https://lib.apollo.dev/core/v1.0")
+  @core(using: "https://lib.apollo.dev/join/v1.0")
+  @core(using: "https://lib.apollo.dev/error/v1.0")
+  @core(using: "https://lib.apollo.dev/ref/v1.0")
+{
   query: Query
 }
 
-directive @cs_key(graph: cs_Graph!)
-  repeatable on FRAGMENT_DEFINITION
 
-directive @cs_resolve(
-  graph: cs_Graph!,
-  requires: cs_SelectionSet,
-  provides: cs_SelectionSet)
-  on FIELD_DEFINITION
+directive @core(using: String!)
+  repeatable on SCHEMA
 
-directive @cs_error(
-  graphs: [cs_Graph!],
-  message: String)
-    on OBJECT
-     | INTERFACE
-     | UNION
-     | FIELD_DEFINITION
+directive @join(
+  graph: join__Graph,
+  requires: ref__Fragment,
+  provides: ref__Fragment)
+  on
+  | OBJECT
+  | INTERFACE
+  | FIELD_DEFINITION
 
-directive @cs_link(to: cs_OutboundLink!)
-  on ENUM_VALUE
+directive @error(join: join__Error)
+  on
+  | OBJECT
+  | INTERFACE
+  | UNION
+  | FIELD_DEFINITION
 
-input cs_OutboundLink {
-  http: cs_OutboundLinkHTTP
+input join__Error {
+  fieldsConflictInSubgraphs: [join__Graph!]!
 }
 
-input cs_OutboundLinkHTTP {
-  url: cs_URL
+enum join__Graph {
+  AUTH,
+  ALBUMS,
+  IMAGES
 }
 
-enum cs_Graph {
-  AUTH @cs_link(to: {
-    http: { url: "https://auth.api.example.com" }
-  }),
-  ALBUMS @cs_link(to: {
-    http: { url: "https://albums.api.example.com" }
-  }),
-  IMAGES @cs_link(to: {
-    http: { url: "https://images.api.example.com" }
-  }),
+scalar join__Never
+  @specifiedBy(url: "https://specs.apollo.dev/cs/v1.0#join__never")
+
+type Query
+  @join(graph: AUTH)
+  @join(graph: IMAGES)
+{
+  me: User        @join(graph: AUTH)
+  images: [Image] @join(graph: IMAGES)
 }
 
-scalar cs_Never
-  @specifiedBy(url: "https://specs.apollo.dev/cs/v1.0#cs_never")
-
-scalar cs_SelectionSet
-  @specifiedBy(url: "https://specs.apollo.dev/cs/v1.0#cs_selectionset")
-
-scalar cs_URL
-  @specifiedBy(url: "https://specs.apollo.dev/cs/v1.0#cs_url")
-
-type Query {
-  me: User        @cs_resolve(graph: AUTH)
-  images: [Image] @cs_resolve(graph: IMAGES)
+type User
+  @join(graph: AUTH, key: "ref___User_id")
+  @join(graph: ALBUMS, key: "ref___User_id")
+{
+  id: ID                  @join(graph: AUTH)
+  name: String            @join(graph: AUTH)
+  albums: [Album!]        @join(graph: ALBUMS)
+  favorite: join__Never   @error(join: {
+                            fieldsConflictInSubgraphs: [ALBUMS, IMAGES]
+                          })
 }
 
-type User {
-  id: ID              @cs_resolve(graph: AUTH)
-  name: String        @cs_resolve(graph: AUTH)
-  albums: [Album!]    @cs_resolve(graph: ALBUMS)
-  favorite: cs_Never  @cs_error(graphs: [ALBUMS, IMAGES],
-                                message: "Field types conflict")
-}
-
-fragment User_id on User
- @cs_key(graph: AUTH)
- @cs_key(graph: ALBUMS) {
+fragment ref___User_id on User {
   id
 }
 
-type Album {
-  user: User        @cs_resolve(graph: ALBUMS)
-  photos: [Image!]  @cs_resolve(graph: ALBUMS)
+type Album @join(graph: ALBUMS) {
+  user: User
+  photos: [Image!]
 }
 
-type Image {
-  url: Url          @cs_resolve(graph: IMAGES)
-  type: MimeType    @cs_resolve(graph: IMAGES)
-  albums: [Album!]  @cs_resolve(graph: ALBUMS)
+type Image
+  @join(graph: ALBUMS, key: "ref___Image_url")
+  @join(graph: IMAGES, key: "ref___Image_url")
+{
+  url: Url          @join(graph: IMAGES)
+  type: MimeType    @join(graph: IMAGES)
+  albums: [Album!]  @join(graph: ALBUMS)
 }
 
-fragment Image_url on Image
-  # This fragment is an Image key within the IMAGE
-  # and ALBUMS graphs.
-  #
-  # The fragment name is arbitrary. The only constraint
-  # is that it must be unique within the document.
-  @cs_key(graph: IMAGE)
-  @cs_key(graph: ALBUMS)
+# This fragment is an Image key within the IMAGE
+# and ALBUMS graphs.
+#
+# The fragment name is arbitrary. The only constraint
+# is that it must be unique within the document.
+fragment ref___Image_url on Image
 {
   url
 }
