@@ -6,8 +6,8 @@
 <main markdown>
 
 <header>
-  <h1 markdown>the `@join` directive</h1>
-  <h2>for defining schemas which join multiple subgraphs</h2>
+  <h1 markdown>`@join` schemas</h1>
+  <h2>for defining <i>supergraphs</i> which join multiple <i>subgraphs</i></h2>
   <table class=spec-md>
     <tr>
       <td>status</td>
@@ -29,7 +29,6 @@
     </tr>
   </table>
 </header>
-
 ## Introduction
 
 *This section is non-normative.*
@@ -37,7 +36,7 @@
 ```mermaid
 #::[Schema joining multiple subgraphs]
 graph LR
-  s1(auth.graphql)-->core(joined schema: photos.graphql)
+  s1(auth.graphql)-->core(join schema: photos.graphql)
   s2(images.graphql)-->core
   s3(albums.graphql)-->core
   style core fill:none,stroke:fuchsia,color:fuchsia;
@@ -46,7 +45,7 @@ graph LR
 This document defines the [`@join` directive](#join-directive-forms) and [associated types](#associated-types) to describe [core schemas](/core/drafts/pre-0) which **join** multiple **subgraph** schemas into a single **supergraph**.
 
 This specification provides machinery to:
-- define [subgraphs](#def-subgraph) with the required [`join__Graph`](#join__Graph) enum
+- define [subgraphs](#def-subgraph) with the [`join__Graph`](#join__Graph) enum
 - assign fields to subgraphs
 - declare additional data required and provided by subgraph field resolvers
 
@@ -190,19 +189,35 @@ The `join__Never` scalar is used to indicate the type of a field which **cannot 
 
 ## `@join` directive forms
 
-### `@join(graph: join__Graph!, key: ref__Fragment!) repeatable on OBJECT`
+### `@join on OBJECT`
 
-Join a type to a subgraph with the provided entity key.
+```graphql
+directive @join(
+  graph: join__Graph!,
+  key: ref__Fragment,
+) repeatable on OBJECT
+```
+
+Join a type to a subgraph, optionally providing an entity key.
 
 Keys will be passed as `representations` within a [portal query](#portal-query) to [port](#portability) a selection set between subgraphs.
 
-<view-of src=photos.graphql#local__Image_url
+<view-of src=photos.graphql#Image
   title='Using <code>@join(graph:,key:)</code> to specify subgraph keys'
+  highlight='line => elStr(line).includes("key:")'
 ></view-of>
 
 Multiple `@join`s can be specified for different subgraphs. It is an error to `@join` an object against the same subgraph multiple times.
 
-### `@join(graph: join__Graph!, requires: ref__Fragment!, provides: ref__Fragment!) on FIELD_DEFINITION`
+### `@join on FIELD_DEFINITION`
+
+```graphql
+directive @join(
+  graph: join__Graph!,
+  requires: ref__Fragment!,
+  provides: ref__Fragment!
+) on FIELD_DEFINITION
+```
 
 Join a field with a particular subgraph.
 
@@ -212,13 +227,13 @@ Any field definitions without a `@join` directive are assumed to be resolvable i
 
 <view-of src=photos.graphql#User...Image
   title='Using <code>@join</code> to join fields to subgraphs'
-  highlight='line => line.includes("@join")'></view-of>
+  highlight='line => line.includes("@join") && !line.includes("type ") && !line.includes("key:")'></view-of>
 
 Fields on root types must always be bound to a subgraph:
 
 <view-of src=photos.graphql#Query
   title='<code>@join</code> on root fields'
-  highlight='line => line.includes("@join")'></view-of>
+  highlight='line => line.includes("me: User") || line.includes("images: [Image]")'></view-of>
 
 
 ## Data Model
