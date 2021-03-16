@@ -1,24 +1,29 @@
 
 schema
-  @core(using: "https://lib.apollo.dev/core/v1.0")
-  @core(using: "https://lib.apollo.dev/join/v1.0")
-  @core(using: "https://lib.apollo.dev/error/v1.0")
-  @core(using: "https://lib.apollo.dev/ref/v1.0")
+  @core(feature: "https://lib.apollo.dev/core/v1.0")
+  @core(feature: "https://lib.apollo.dev/join/v1.0")
+  @core(feature: "https://lib.apollo.dev/error/v1.0")
 {
   query: Query
 }
 
 
-directive @core(using: String!)
+directive @core(feature: String!)
   repeatable on SCHEMA
 
-directive @join(
+directive @join__type(
   graph: join__Graph,
   requires: ref__Fragment,
   provides: ref__Fragment)
   on
   | OBJECT
   | INTERFACE
+
+directive @join__field(
+  graph: join__Graph,
+  requires: ref__Fragment,
+  provides: ref__Fragment)
+  on
   | FIELD_DEFINITION
 
 directive @error(join: join__Error)
@@ -39,23 +44,23 @@ enum join__Graph {
 }
 
 scalar join__Never
-  @specifiedBy(url: "https://specs.apollo.dev/cs/v1.0#join__never")
 
 type Query
-  @join(graph: AUTH)
-  @join(graph: IMAGES)
+  @join__type(graph: AUTH)
+  @join__type(graph: IMAGES)
 {
-  me: User        @join(graph: AUTH)
-  images: [Image] @join(graph: IMAGES)
+  me: User        @join__field(graph: AUTH)
+  images: [Image] @join__field(graph: IMAGES)
 }
 
 type User
-  @join(graph: AUTH, key: "ref___User_id")
-  @join(graph: ALBUMS, key: "ref___User_id")
+  @join__owner(graph: AUTH)
+  @join__type(graph: AUTH, key: "ref___User_id")
+  @join__type(graph: ALBUMS, key: "ref___User_id")
 {
-  id: ID                  @join(graph: AUTH)
-  name: String            @join(graph: AUTH)
-  albums: [Album!]        @join(graph: ALBUMS)
+  id: ID                  @join__field(graph: AUTH)
+  name: String            @join__field(graph: AUTH)
+  albums: [Album!]        @join__field(graph: ALBUMS)
   favorite: join__Never   @error(join: {
                             fieldsConflictInSubgraphs: [ALBUMS, IMAGES]
                           })
@@ -71,12 +76,13 @@ type Album @join(graph: ALBUMS) {
 }
 
 type Image
-  @join(graph: ALBUMS, key: "ref___Image_url")
-  @join(graph: IMAGES, key: "ref___Image_url")
+  @join__owner(graph: IMAGES)
+  @join__type(graph: ALBUMS, key: "ref___Image_url")
+  @join__type(graph: IMAGES, key: "ref___Image_url")
 {
-  url: Url          @join(graph: IMAGES)
-  type: MimeType    @join(graph: IMAGES)
-  albums: [Album!]  @join(graph: ALBUMS)
+  url: Url          @join__field(graph: IMAGES)
+  type: MimeType    @join__field(graph: IMAGES)
+  albums: [Album!]  @join__field(graph: ALBUMS)
 }
 
 # This fragment is an Image key within the IMAGE

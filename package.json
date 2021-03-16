@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "specs.apollo.dev"
+    "start": "specs.apollo.dev",
+    "build": "rsync -avz --exclude .dist . .dist && spec-md join.spec.md > .dist/index.html"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@apollo/specs.apollo.dev": "file:../specs"
+    "@queerviolet/speck": "git://github.com/queerviolet/speck.git#main"
   }
 }
