@@ -1,82 +1,27 @@
 schema
-	@core(using: "https://lib.apollo.dev/core/v0.1")
-	@core(using: "https://lib.apollo.dev/core/spec/v0.1")
-	@core(using: "https://lib.apollo.dev/core/error/v0.1")
-	@core(using: "https://lib.apollo.dev/core/ref/v0.1")
-	@core(using: "https://lib.apollo.dev/oneOf/v0.1")
-
-
-	@spec(specifying: "https://lib.apollo.dev/join/v0.1")
-{
-	query: Query
+  @core(using: "https://lib.apollo.dev/core/v0.1")
+  @core(using: "https://lib.apollo.dev/join/v0.1") {
+  query: Query
 }
 
-enum join__Graph @spec(extensible: DATA) { }
+directive @join__owner(graph: join__Graph) on OBJECT
 
-input join__Field
-	@spec(as: "@join", on: FIELD)
-{
-	graph: join__Graph!
-	requires: ref__Fragment @ref(fragmentOn: PARENT_TYPE)
-	provides: ref__Fragment @ref(fragmentOn: PARENT_TYPE)
-}
+directive @join__type(
+  graph: join__Graph!
+  requires: core__FieldSet
+  provides: core__FieldSet
+) on OBJECT | INTERFACE
 
-input join__Type
-	@spec(as: "@join", on: OBJECT, repeatable: true)
-{
-	graph: join__Graph!
-	key: ref__Fragment @ref(fragmentOn: SELF)
-}
+directive @join__field(
+  graph: join__Graph
+  requires: core__FieldSet
+  provides: core__FieldSet
+) on FIELD_DEFINITION
 
-input join__Abstract
-	@spec(as: "@join", on: INTERFACE | UNION, repeatable: true)
-{
-	graph: join__Graph!
-	type: String
-}
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
 
-extend input error__Error {
-	join: join__Error
-}
-
-input join__Error {
-	conflict: [join__Conflicted!]!
-}
-
-input join__Conflicted {
-	graph: join__Graph!
-}
-
-scalar ref__Fragment
-
-enum spec__Extensibility {
-	"""
-	Items intended as document data.
-	
-	Namespacing rules within DATA items:
-		- Documents may define bare names
-		- Spec metadata is prefixed: `spec__*`
-	"""
-	DATA
-}
-
-enum spec__DirectiveLocation {
-	QUERY
-	MUTATION
-	SUBSCRIPTION
-	FIELD
-	FRAGMENT_DEFINITION
-	FRAGMENT_SPREAD
-	INLINE_FRAGMENT
-	SCHEMA
-	SCALAR
-	OBJECT
-	FIELD_DEFINITION
-	ARGUMENT_DEFINITION
-	INTERFACE
-	UNION
-	ENUM
-	ENUM_VALUE
-	INPUT_OBJECT
-	INPUT_FIELD_DEFINITION
-}
+# enum join__Graph {
+#   # EnumValues within join__Graph must be generated. They should appear as follows,
+#   # using the @join__graph directive to capture subgraph metadata:
+#   # IMAGES @join__graph(name: "images", url: "https://images.api.com")
+# }

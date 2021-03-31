@@ -14,7 +14,7 @@
 
 ```mermaid diagram -- Schema joining multiple subgraphs
 graph LR
-  s1(auth.graphql)-->core(join schema: photos.graphql)
+  s1(auth.graphql)-->core(composed schema: photos.graphql)
   s2(images.graphql)-->core
   s3(albums.graphql)-->core
   style core fill:none,stroke:fuchsia,color:fuchsia;
@@ -23,9 +23,9 @@ graph LR
 This document defines schema elements for describing [core schemas](/core/v0.1) which **join** multiple **subgraph** schemas into a single **supergraph** schema.
 
 This specification provides machinery to:
-- define [subgraphs](#def-subgraph) with the {join__Graph} enum
+- define [subgraphs](#def-subgraph) with the {join__Graph} enum and the {@join__graph} directive
 - assign fields to subgraphs with {@join__field}
-- declare additional data required and provided by subgraph field resolvers with [`requires:`](#@join__field/requires) and [`provides:`](#@join__field/provides)
+- declare additional data required and provided by subgraph field resolvers with the [`requires`](#@join__field/requires) and [`provides`](#@join__field/provides) arguments
 
 # How to read this document
 
@@ -101,17 +101,17 @@ flowchart TB
 
 <a namme=def-router>**Routers**</a> are consumers which serve a composed schema as a GraphQL endpoint. *This definition is non-normative.*
   - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch, nor does it attempt to normatively separate routers from other join schema consumers.
-  - Routers will often join schema elements from the schema they present to clients via introspection ({join__Graph}, for example, will typically be omitted)
+  - Routers will often omit schema elements from the schema they present to clients via introspection ({join__Graph}, for example, will typically be omitted)
 
 <a name=def-endpoint>**Endpoints**</a> are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
 
-<a name=def-subgraph>**Subgraphs**</a> are the GraphQL schemas which were composed to form the join schema. They are declared as values on the special {join__Graph} enum.
+<a name=def-subgraph>**Subgraphs**</a> are GraphQL schemas which are composed to form the join schema. They are declared as values on the special {join__Graph} enum.
 
 This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to be join schemas or to follow this spec in any way; neither is it an error for them to do so. Composers MAY place additional requirements on subgraph schemas to aid in composition; composers SHOULD document any such requirements.
 
 # Basic Requirements
 
-Schemas using {@join} MUST be valid [core schema documents](/core/v0.1) with {@core} directives referencing this specification along with any transitively referenced specifications.
+Schemas using {@join} MUST be valid [core schema documents](/core/v0.1) with {@core} directives referencing this specification.
 
 :::[example](photos.graphql#schema) -- {@core} directives for join schemas
 
@@ -131,19 +131,17 @@ Documents MUST define a {join__Graph} enum. Each enum value defines a subgraph.
 
 The {join__Graph} enum is used as input to {@join} directives which link fields and types to subgraphs.
 
-# Scalars
-
-Documents MUST include definitions of any scalars they use. Producers SHOULD include the `@specifiedBy` directive, but it is not mandatory.
-
-##! join__Never
-
-:::[definition](photos.graphql#join__Never)
-
-The {join__Never} scalar is used to indicate the type of a field which **cannot be resolved**. This is typically due to a composition error. Producers SHOULD provide more specific error information with an {@error} directive on the relevant field.
-
-:::[example](photos.graphql#User.favorite) -- Using {join__Never} and {@error} to mark a field error
-
 # Directives
+
+##! @join__graph
+
+Declare subgraph metadata on {join__Graph} enum values. 
+
+```graphql definition
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
+```
+
+:::[example](photos.graphql#join__Graph) -- Using {@join__graph} to declare subgraph metadata on the {join__Graph} enum values.
 
 ##! @join__type
 
@@ -151,18 +149,15 @@ Join a type to a subgraph, optionally providing an entity key.
 
 ```graphql definition
 directive @join__type(
-  graph: join__Graph!,
-  key: ref__Fragment)
-  repeatable on OBJECT
+  graph: join__Graph!
+  key: String
+) repeatable on OBJECT | INTERFACE
 ```
 
+// TODO: rename portal query?
 Keys will be passed as `representations` within a [portal query](#portal-query) to [port](#portability) a selection set between subgraphs.
 
 :::[example](photos.graphql#Image) -- Using {@join__type} to specify subgraph keys
-
-```html diagram
-<script>line => elStr(line).includes("key:")</script>
-```
 
 Multiple {@join}s can be specified for different subgraphs. It is an error to {@join} an object against the same subgraph multiple times.
 
@@ -171,8 +166,7 @@ Multiple {@join}s can be specified for different subgraphs. It is an error to {@
 Specify the graph which owns the object type.
 
 ```graphql definition
-directive @join__owner(graph: join__Graph!)
-  on OBJECT
+directive @join__owner(graph: join__Graph!) on OBJECT
 ```
 
 Object types with keys MUST be owned by a subgraph. The owning subgraph:
@@ -187,9 +181,9 @@ Join a field with a particular subgraph.
 
 ```graphql definition
 directive @join__field(
-  graph: join__Graph!,
-  requires: ref__Fragment!,
-  provides: ref__Fragment!
+  graph: join__Graph
+  requires: String!
+  provides: String!
 ) on FIELD_DEFINITION
 ```
 
@@ -198,10 +192,6 @@ The parent type MUST be {@join}ed with the specified `graph:`.
 Any field definitions without a {@join} directive are assumed to be resolvable in any subgraph which {@join}s the parent type.
 
 :::[example](photos.graphql#User...Image) -- Using {@join__field} to join fields to subgraphs
-
-```html diagram
-<script>line => line.includes("@join") && !line.includes("type ") && !line.includes("key:")</script>
-```
 
 Fields on root types must always be bound to a subgraph:
 
@@ -228,22 +218,23 @@ The role of the router is to break apart an incoming query against the published
 
 A *realized selection set* is a selection within an inbound query, with particular type bounds, which will be issued against a particular subgraph. We denote the realized type of this selection set as `subgraph::(Type Bounds)`. Within this section, we use the special subgraph name `self` to refer to the exported composed schema.
 
-Within a realized selection set, the router can only query fields known to the realized subgraph and valid within the type bounds. As usual with GraphQL execution, a selection on more specific bounds can be acquired by emitting an inline fragment (`...on Subtype`). Porting to a different subgraph—to acquire bounds specific to that subgraph, including fields bound to that subgraph—requires a [portal query](#portal-query).
+Within a realized selection set, the router can only query fields which are known to the selection set's subgraph and are valid within the type bounds. As usual with GraphQL execution, a selection on more specific bounds can be acquired by emitting an inline fragment (`... on Subtype`). 
+// TODO: digest and rewrite what this means
+Porting to a different subgraph—to acquire bounds specific to that subgraph, including fields bound to that subgraph—requires a [portal query](#portal-query).
 
 ```graphql example -- Query with resolvers and realized selection sets
-               # resolver              | realizes
-               # ---------------------------------------               
-query {        # (root)                -> self::Query
-    albums {   # albums::Query.albums  -> albums::Album
-      user {   # albums::Album.user    -> albums::User
-        name   # auth::User.name       -> String
-      }
+              # resolver              | realizes
+              # ---------------------------------------               
+query {       # (root)                -> self::Query
+  albums {    # albums::Query.albums  -> albums::Album
+    user {    # albums::Album.user    -> albums::User
+      name    # auth::User.name       -> String
     }
   }
 }
 ```
 
-This query requires one portal: `name` is available on `self::User` but not on `albums::User`. Instead, it is provided only by `auth::User`. Since `name` is selected within an `albums::User`, the router must use a [portal](#portal-query) to acquire a selection on `auth::User` and resolve the field.
+This query requires one portal. The `name` field is not available on `albums::User`, however it is provided by `auth::User`. Since `name` is selected within an `albums::User`, the router must use a [portal](#portal-query) to acquire a selection on `auth::User` and resolve the field.
 
 ### Free / Bound fields
 
@@ -265,7 +256,7 @@ query {
 }
 ```
 
-Incoming queries cross subgraph boundaries require "porting" wherever they select a field that is not resolvable by the subgraph of the realized type from which they are selected. In the above example, selecting `me.albums.user.name` crosses such a boundary, since `albums.user` is a selection on `albums::User` and `user.name` is only resolvable by `auth::User.name`.
+Incoming queries which cross subgraph boundaries require "porting" wherever they select a field that is not resolvable by the subgraph of the realized type from which they are selected. In the above example, selecting `me.albums.user.name` crosses such a boundary, since `albums.user` is a selection on `albums::User` and `user.name` is only resolvable by `auth::User.name`.
 
 To resolve this query, `albums::User` must be *portable* to `auth::User`. That is, given a selection on `albums::User`, there must be some way to arrive at a selection on `auth::User`.
 
@@ -280,12 +271,12 @@ In order to acquire a selection set on a entity within a subgraph, routers may i
 ```graphql example -- Portal query
 query {
   _entities(representations: $representations) {
-    # ...selections...
+    # ...selections
   }
 }
 ```
 
-`representations` MUST be a list of input objects, each of which consist of the `__typename` of the object type or interface along with the result of fetching one that subgraph's `key` fragment for the type.
+`representations` MUST be a list of input objects, each of which consist of the `__typename` of the object type or interface along with the result of fetching that subgraph's `key` for the type.
 
 ```graphql example -- Portal query with representations
 query {
@@ -293,12 +284,13 @@ query {
     { __typename: "Image", url: "http://example.com/1.png"},
     { __typename: "Image", url: "http://example.com/2.png"},
   ]) {
-    # ...selection on Image...
+    # ... on Image { ... }
   }
 }
 ```
 
-The `_entities` resolver need not be explicitly defined in the subgraph schema. If it is defined, its specified types are ignored—it is assumed that the resolver is capable of resolving objects and interfaces from any key specified within the join schema.
+// TODO: is this correct? How can this possibly work without definining `_entities` resolver?
+The `_entities` resolver need not be explicitly be defined in the subgraph schema. If it is defined, its specified types are ignored. It will be assumed that the resolver is capable of resolving objects and interfaces from any key specified within the join schema.
 
 # Validations
 
