@@ -1,15 +1,14 @@
 # Join
 
-<h2>for defining *supergraphs* which join multiple *subgraphs*</h2> 
+<h2>for defining *supergraphs* which join multiple *subgraphs*</h2>
 
 ```raw html
 <table class=spec-data>
   <tr><td>Status</td><td>Draft</td>
   <tr><td>Version</td><td>0.1</td>
 </table>
-<link rel=stylesheet href=/apollo-dark.css>
-<link rel=stylesheet href=/tron.css>
-<script type=module async defer src=/install-nav.js></script>
+<link rel=stylesheet href=/apollo-light.css>
+<script type=module async defer src=/inject-logo.js></script>
 ```
 
 ```mermaid diagram -- Schema joining multiple subgraphs
@@ -67,7 +66,7 @@ flowchart TB
     subgraph A [subgraph A]
       schemaA([schema A])
       endpointA([endpoint A])
-    end    
+    end
     subgraph B [subgraph B]
       schemaB([schema B])
       endpointB([endpoint B])
@@ -82,7 +81,7 @@ flowchart TB
     joinSchema([Join Schema])
     subgraph "Consumer ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
       Router
-    end    
+    end
     A-->Composer
     B-->Composer
     C-->Composer
@@ -176,7 +175,7 @@ directive @join__owner(graph: join__Graph!)
 ```
 
 Object types with keys MUST be owned by a subgraph. The owning subgraph:
-  - MUST be able to resolve all of the object's keys for any subgraph 
+  - MUST be able to resolve all of the object's keys for any subgraph
   - MUST be able to resolve all fields referenced via [requires](@join__field/requires)
 
 Note: Type ownership is currently slated for removal in a future version of this spec. It is RECOMMENDED that router implementations consider approaches which function in the absence of these restrictions.
@@ -232,7 +231,7 @@ Within a realized selection set, the router can only query fields known to the r
 
 ```graphql example -- Query with resolvers and realized selection sets
                # resolver              | realizes
-               # ---------------------------------------               
+               # ---------------------------------------
 query {        # (root)                -> self::Query
     albums {   # albums::Query.albums  -> albums::Album
       user {   # albums::Album.user    -> albums::User
