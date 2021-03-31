@@ -1,6 +1,6 @@
 schema
-  @core(using: "https://lib.apollo.dev/core/v0.1")
-  @core(using: "https://lib.apollo.dev/join/v0.1") {
+  @core(using: "https://specs.apollo.dev/core/v0.1")
+  @core(using: "https://specs.apollo.dev/join/v0.1") {
   query: Query
 }
 
