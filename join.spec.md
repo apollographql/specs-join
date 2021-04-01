@@ -33,7 +33,7 @@ This document uses [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) guidance reg
 
 ## What this document isn't
 
-This document specifies only the structure and semantics of join schemas. It's expected that the join schemas will generally be the output of a compilation process which composes subgraph schemas. The mechanics of that process are not specified normatively here; a suggestion is provided in [Appendix: Basic Composition Algorithm](#sec-Appendix-Suggested-Composition-Algorithm). Conforming implementations may choose any approach they like, so long as the result conforms to the requirements of this document.
+This document specifies only the structure and semantics of supergraphs. It's expected that a supergraph will generally be the output of a compilation process which composes subgraph schemas. The mechanics of that process are not specified normatively here; a suggestion is provided in [Appendix: Basic Composition Algorithm](#sec-Appendix-Suggested-Composition-Algorithm). Conforming implementations may choose any approach they like, so long as the result conforms to the requirements of this document.
 
 # Example: Photo Library
 
@@ -45,7 +45,7 @@ We'll refer to this example of a photo library throughout the document:
 
 The meaning of the `@join__*` directives is explored in the [Directives](#sec-Directives) section.
 
-The example represents **one way** to compose three input schemas, based on [federated composition](https://www.apollographql.com/docs/federation/federation-spec/). These schemas are provided for purposes of illustration only. This spec places no normative requirements on composer input. It does not require that subgraphs use federated composition directives, and it does not place any requirements on *how* the composer builds a join schema, except to say that the resulting schema must be a valid join schema document.
+The example represents **one way** to compose three input schemas, based on [federated composition](https://www.apollographql.com/docs/federation/federation-spec/). These schemas are provided for purposes of illustration only. This spec places no normative requirements on composer input. It does not require that subgraphs use federated composition directives, and it does not place any requirements on *how* the composer builds a supergraph, except to say that the resulting schema must be a valid supergraph document.
 
 [auth](./albums.graphql) provides the `User` type and `Query.me`.
 
@@ -79,7 +79,7 @@ flowchart TB
     subgraph "Producer ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
       Composer
     end
-    joinSchema([Join Schema])
+    supergraph([Supergraph])
     subgraph "Consumer ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
       Router
     end    
@@ -93,27 +93,27 @@ flowchart TB
     Clients-->Router
 ```
 
-<a name=def-producer>**Producers**</a> generate join schemas. This spec places requirements on join schema producers.
+<a name=def-producer>**Producers**</a> generate supergraphs. This spec places requirements on supergraph producers.
 
-<a name=def-consumer>**Consumers**</a> consume join schemas. This spec places requirements on join schema consumers.
+<a name=def-consumer>**Consumers**</a> consume supergraphs. This spec places requirements on supergraph consumers.
 
-<a name=def-composer>**Composers** (or **compilers**)</a> are producers which compose subgraph schemas into a join schema. This document places no particular requirements on the composition algorithm, except that it must produce valid join schemas.
+<a name=def-composer>**Composers** (or **compilers**)</a> are producers which compose subgraphs into a supergraph. This document places no particular requirements on the composition algorithm, except that it must produce a valid supergraph.
 
 <a namme=def-router>**Routers**</a> are consumers which serve a composed schema as a GraphQL endpoint. *This definition is non-normative.*
-  - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch, nor does it attempt to normatively separate routers from other join schema consumers.
+  - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch, nor does it attempt to normatively separate routers from other supergraph consumers.
   - Routers will often omit schema elements from the schema they present to clients via introspection ({join__Graph}, for example, will typically be omitted)
 
 <a name=def-endpoint>**Endpoints**</a> are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
 
-<a name=def-subgraph>**Subgraphs**</a> are GraphQL schemas which are composed to form the join schema. They are declared as values on the special {join__Graph} enum.
+<a name=def-subgraph>**Subgraphs**</a> are GraphQL schemas which are composed to form a supergraph. Subgraph names and metadata are declared within the special {join__Graph} enum.
 
-This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to be join schemas or to follow this spec in any way; neither is it an error for them to do so. Composers MAY place additional requirements on subgraph schemas to aid in composition; composers SHOULD document any such requirements.
+This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to be supergraphs themselves or to follow this spec in any way; neither is it an error for them to do so. Composers MAY place additional requirements on subgraph schemas to aid in composition; composers SHOULD document any such requirements.
 
 # Basic Requirements
 
 Schemas using {@join} MUST be valid [core schema documents](/core/v0.1) with {@core} directives referencing this specification.
 
-:::[example](photos.graphql#schema) -- {@core} directives for join schemas
+:::[example](photos.graphql#schema) -- {@core} directives for supergraphs
 
 # Enums
 
@@ -290,7 +290,7 @@ query {
 ```
 
 // TODO: is this correct? How can this possibly work without definining `_entities` resolver?
-The `_entities` resolver need not be explicitly be defined in the subgraph schema. If it is defined, its specified types are ignored. It will be assumed that the resolver is capable of resolving objects and interfaces from any key specified within the join schema.
+The `_entities` resolver need not be explicitly be defined in the subgraph schema. If it is defined, its specified types are ignored. It will be assumed that the resolver is capable of resolving objects and interfaces from any key specified within the supergraph.
 
 # Validations
 
