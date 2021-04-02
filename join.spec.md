@@ -439,9 +439,3 @@ directive @join__owner(graph: join__Graph!) on OBJECT
 The descriptions of [{@join__type}](#@join__type) and [{@join__field}](#@join__field) describes requirements on how {@join__owner} relates to {@join__type} and the `requires` argument to {@join__field}.
 
 Note: Type ownership is currently slated for removal in a future version of this spec. It is RECOMMENDED that router implementations consider approaches which function in the absence of these restrictions. The [data model](#sec-Owned-fields-on-owned-types) explains how the current router's query planning algorithm depends on concept of type ownership.
-
-
-```html diagram
-<script>line => line.includes("me: User") || line.includes("images: [Image]")</script>
-```
-
