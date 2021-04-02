@@ -132,14 +132,15 @@ If a field appears at the root of the overall operation (query or mutation), the
 # Supergraph schema
 type Query {
   fieldA: String @join__field(graph: A)
+  fieldAlsoFromA: String @join__field(graph: A)
   fieldB: String @join__field(graph: B)
 }
 
 # Operation
-{ fieldA fieldB }
+{ fieldA fieldAlsoFromA fieldB }
 # Generated subgraph operations
 ## On A:
-{ fieldA }
+{ fieldA fieldAlsoFromA }
 ## On B:
 { fieldB }
 ```
