@@ -114,7 +114,7 @@ This spec does not place any requirements on subgraph schemas. Generally, they m
 
 *This section is non-normative.* It describes the motivation behind the directives defined by this specification.
 
-A supergraph schema describes a GraphQL schema that can be served by a router. The router does not contain logic to resolve any of the schema's fields; instead, the supergraph schema contains directives starting with {@join__} that tell the router which subgraph endpoint can resolve each field, as well as other information needed in order to construct subgraph queries.
+A supergraph schema describes a GraphQL schema that can be served by a router. The router does not contain logic to resolve any of the schema's fields; instead, the supergraph schema contains directives starting with {@join__} that tell the router which subgraph endpoint can resolve each field, as well as other information needed in order to construct subgraph operations.
 
 The directives described in this specification are designed for a particular query planning algorithm, and so there are some restrictions on how they can be combined that originate from the requirements of this algorithm. For example, this specification describes a concept of [type ownership](#sec-Owned-fields-on-owned-types) which exists not because we believe it describes the ideal method of structuring your subgraphs, but because this query planning algorithm depends on type ownership. We hope that future versions of this specification can relax some of these restrictions. 
 
@@ -122,7 +122,7 @@ Each supergraph schema contains a list of the subgraphs. The [{join__Graph}](#jo
 
 To resolve a field, the router needs to know to which subgraphs it can delegate the field's resolution. One explicit way to indicate this in a supergraph schema is by annotating the field with a [{@join__field}](#@join__field) directive specifying which subgraph should be used to resolve that field. (There are other ways of indicating which subgraphs can resolve a field which will be described later.)
 
-In order for the router to send an operation that resolves a given field on a parent object to a subgraph, the operation needs to first resolve the parent object itself. There are several ways to accomplish this, described below. The examples below include abbreviated versions of the supergraph schemas which do not include the `schema` definition, directive definitions, or the `join__Graph` definition. This specification does not require the subgraph queries to be the same as those described in these examples; this is just intended to broadly describe the meanings of the directives.
+In order for the router to send an operation that resolves a given field on a parent object to a subgraph, the operation needs to first resolve the parent object itself. There are several ways to accomplish this, described below. The examples below include abbreviated versions of the supergraph schemas which do not include the `schema` definition, directive definitions, or the `join__Graph` definition. This specification does not require the subgraph operations to be the same as those described in these examples; this is just intended to broadly describe the meanings of the directives.
 
 ## Root fields
 
