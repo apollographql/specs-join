@@ -383,6 +383,8 @@ directive @join__graph(name: String!, url: String!) on ENUM_VALUE
 
 :::[example](photos.graphql#join__Graph) -- Using {@join__graph} to declare subgraph metadata on the {join__Graph} enum values.
 
+The {@join__graph} directive MUST be applied to each enum value on {join__Graph}, and nowhere else. All applications must provide distinct values for the `name` argument; this name is an arbitrary non-empty string that may be used in representations of query plans and diagnostic messages. The `url` argument is an endpoint that can resolve GraphQL queries for the subgraph.
+
 ##! @join__type
 
 Join a type to a subgraph, optionally providing an entity key.
