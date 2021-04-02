@@ -100,7 +100,7 @@ flowchart TB
 <a name=def-composer>**Composers** (or **compilers**)</a> are producers which compose subgraphs into a supergraph. This document places no particular requirements on the composition algorithm, except that it must produce a valid supergraph.
 
 <a namme=def-router>**Routers**</a> are consumers which serve a composed schema as a GraphQL endpoint. *This definition is non-normative.*
-  - Graph routers differ from standard GraphQL endpoints in that they are not expected to process data or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch, nor does it attempt to normatively separate routers from other supergraph consumers.
+  - Graph routers differ from standard GraphQL endpoints in that they are not expected to resolve fields or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch, nor does it attempt to normatively separate routers from other supergraph consumers.
   - Routers will often omit schema elements from the schema they present to clients via introspection ({join__Graph}, for example, will typically be omitted)
 
 <a name=def-endpoint>**Endpoints**</a> are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
@@ -108,6 +108,235 @@ flowchart TB
 <a name=def-subgraph>**Subgraphs**</a> are GraphQL schemas which are composed to form a supergraph. Subgraph names and metadata are declared within the special {join__Graph} enum.
 
 This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to be supergraphs themselves or to follow this spec in any way; neither is it an error for them to do so. Composers MAY place additional requirements on subgraph schemas to aid in composition; composers SHOULD document any such requirements.
+
+# Data Model
+
+TODO maybe this should be called something more like "Overview" or "Graph Routing in a Supergraph" or something?
+
+*This section is non-normative.* It describes the motivation behind the directives defined by this specification.
+
+A supergraph schema describes a GraphQL schema that can be served by a router. The router does not contain logic to resolve any of the schema's fields; instead, the supergraph schema contain directives starting with {@join__} which tell the router which subgraph endpoints can resolve each field, as well as other information needed in order to construct subgraph queries.  The directives described in this specification are designed for a particular query planning algorithm, and so there are some restrictions on how they can be combined that originate from the requirements of this algorithm. (We hope that future versions of this specification can relax some of these restrictions.)
+
+Each supergraph schema contains a list of the subgraphs. It represents this as an enum called [{join__Graph}](#join__Graph) with an enum value for each subgraph. Each enum value is annotated with a [{@join__graph}](#@join__graph) directive telling the router what endpoint can be used to reach the subgraph and a name for the subgraph that can be used in representations of query plans and diagnostic messages.
+
+To resolve a field, the router needs to know to which subgraphs it can delegate the field's resolution. The most direct way to indicate this in a supergraph schema is by annotating the field with a [{@join__field}](#@join__field) directive specifying which subgraph should be used to resolve that field.
+
+In order for the router to send an operation that resolves a given field on a parent object to a subgraph, the operation needs to first resolve the parent object itself. There are several ways to accomplish this, described below. The examples below include abbreviated versions of the supergraph schemas which do not include the `schema` definition, directive definitions, or the `join__Graph` definition. This specification does not require the subgraph queries to be the same as those described in these examples; this is just intended to broadly describe the meanings of the directives.
+
+## Root fields
+
+If this field appears at the root of the overall operation (query or mutation), then the field can just be placed at the root of the subgraph operation.
+
+```graphql example -- Root fields
+# Supergraph schema
+type Query {
+  fieldA: String @join__field(graph: A)
+  fieldB: String @join__field(graph: B)
+}
+
+# Operation
+{ fieldA fieldB }
+# Generated subgraph operations
+## On A:
+{ fieldA }
+## On B:
+{ fieldB }
+```
+
+
+## Fields on the same subgraph as the parent operation
+
+If this field's parent field will be resolved by an operation on the same subgraph, then this field can be resolved as part of the same operation, by putting it in a nested selection set on the parent field's subgraph operation. Note that this example contains a {@join__owner} directive on an object type; this will be described later.
+
+```graphql example -- Fields on the same subgraph as the parent operation
+# Supergraph schema
+type Query {
+  fieldA: X @join__field(graph: A)
+}
+
+type X @join__owner(graph: A) {
+  nestedFieldA: String @join__field(graph: A)
+}
+
+# Operation
+{ fieldA { nestedFieldA } }
+# Generated subgraph operations
+## On A:
+{ fieldA { nestedFieldA }}
+```
+
+## Fields provided by the parent field
+
+When resolving a field to a composite type (object, interface, or union), it is sometimes easy to calculate the values of nested fields inside that object even if those nested fields are ordinarily resolved in a different subgraph. When this is the case, you can include a `provides` argument in the `@join__field` listing these "pre-calculated" fields. The router can now resolve these fields in the "providing" subgraph instead of in the subgraph that would usually be used to resolve those fields.
+
+```graphql example -- Provided fields
+# Supergraph schema
+type Query {
+  fieldA: X @join__field(graph: A, provides: "usuallyBField")
+  fieldB: X @join__field(graph: B)
+}
+
+type X @join__owner(graph: B) {
+  usuallyBField: String @join__field(graph: B)
+}
+
+# Operation
+{ fieldB { usuallyBField } }
+# Generated subgraph operations
+## On B
+{ fieldB { usuallyBField } }
+
+# Operation
+{ fieldA { usuallyBField } }
+# Generated subgraph operations
+## On A
+{ fieldA { usuallyBField } }
+```
+
+## Fields on value types
+
+Some types have the property that all of their fields can be resolved by *any* subgraph that can resolve a field returning that type. These types are called *value types*. (Imagine a type `type T { x: Int, y: String }` where every resolver for a field of type `T` actually produces an object like `{x: 1, y: "z"}`, and the resolvers for the two fields on `T` just unpack the values already in the object.) In a supergraph schema, a type is a value type if it does not have a [{@join__owner}](#@join__owner) directive on it.
+
+```graphql example -- Value types
+# Supergraph schema
+type Query {
+  fieldA: X @join__field(graph: A)
+  fieldB: X @join__field(graph: B)
+}
+
+type X {
+  anywhere: String
+}
+
+# Operation
+{ fieldA { anywhere } }
+# Generated subgraph operations
+## On A
+{ fieldA { anywhere } }
+
+# Operation
+{ fieldB { anywhere } }
+# Generated subgraph operations
+## On B
+{ fieldB { anywhere } }
+```
+
+## Owned fields on owned types
+
+We've finally reached the most interesting case: a field that must be resolved by an operation on a different subgraph from the subgraph on which its parent field was resolved. In order to do this, we need a way to tell the subgraph to resolve that parent object. We do this by defining a special root field in the subgraph's schema: `Query._entities(representations: [_Any!]!): [_Entity]!`. This field takes a list of "representations", which are JSON objects containing a `__typename` field and some other fields, and returns a list of the same length of the corresponding objects resulting from looking up the representations in an application-dependent way.
+
+There are several ways that the router can calculate a representation to pass to a subgraph. In this specification, all non-value types have a specific subgraph referred to as its "owner", specified via a `@join__owner` directive on the type. (Object types that are not value types are referred to as "entities"; the type `_Entity` referenced above is a union defined in each subgraph's schema consisting of the entity types defined by that subgraph. Only subgraphs which define entities need to define the `Query._entities` field.) The type must also have at least one `@join__type` directive specifying the owning subgraph along with a {key}. For each additional subgraph which can resolve fields returning that type, there should be exactly one `@join__type` directive specifying that subgraph along with a {key}, which should be identical to one of the keys specified with the owning subgraph.
+
+A key is a set of fields on the type (potentially including sub-selections and inline fragments), specified as a string. If a type `T` is annotated with `@join__type(subgraph: G, key: "a b { c }")`, then it must be possible to resolve the full field set provided as a key on subgraph G. Additionally, if you take an object with the structure returned by resolving that field set and add a field `__typename: "T"`, then you should be able to pass the resulting value as a representation to the `Query._entities` field on subgraph G.
+
+In order to resolve a field on an entity on the subgraph that owns its parent type, where that subgraph is different from the subgraph that resolved its parent object, the router first resolves a key for that object on the previous subgraph, and then uses that representation on the owning subgraph.
+
+For convenience, you may omit `@join__field(graph: A)` directives on fields whose parent type is owned by `A`.
+
+```graphql example -- Owned fields on owned types
+# Supergraph schema
+type Query {
+  fieldB: X @join__field(graph: B)
+}
+
+type X
+    @join__owner(graph: A)
+    # As the owner, A is allowed to have more than one key.
+    @join__type(graph: A, key: "x")
+    @join__type(graph: A, key: "y z")
+    # As non-owners, B and C can only have one key each and
+    # they must match a key from A.
+    @join__type(graph: B, key: "x")
+    @join__type(graph: C, key: "y z")
+  {
+  # Because B owns X, we can omit @join__field(graph: B)
+  # from these two fields.
+  x: String
+  y: String
+  z: String
+}
+
+# Operation
+{ fieldB { y } }
+# Generated subgraph operations
+## On B. `y` is not available, so we need to fetch B's key for X.
+{ fieldB { x } }
+## On A
+## $r = [{__typename: "X", x: "some-x-value"}]
+query ($r: [_Any!]!) { _entities(representations: $r]) { y } }
+```
+
+## Extension fields on owned types
+
+The previous section described how to jump from one subgraph to another in order to resolve a field on the subgraph that owns the field's parent type. The situation is a bit more complicated when you want to resolve a field on a subgraph that doesn't own the field's parent type — what we call an extension field. That's because we no longer have the guarantee that the subgraph you're coming from and the subgraph you're going to share a key in common. In this case, we may need to pass through the owning type.
+
+```graphql example -- Extension fields on owned types
+# Supergraph schema
+type Query {
+  fieldB: X @join__field(graph: B)
+}
+
+type X
+    @join__owner(graph: A)
+    # As the owner, A is allowed to have more than one key.
+    @join__type(graph: A, key: "x")
+    @join__type(graph: A, key: "y z")
+    # As non-owners, B and C can only have one key each and
+    # they must match a key from A.
+    @join__type(graph: B, key: "x")
+    @join__type(graph: C, key: "y z")
+  {
+  x: String
+  y: String
+  z: String
+  c: String @join__field(graph: C)
+}
+
+# Operation
+{ fieldB { c } }
+# Generated subgraph operations
+## On B. `c` is not available on B, so we need to eventually get over to C.
+## In order to do that, we need `y` and `z`... which aren't available on B
+## either! So we need to take two steps. First we use B's key.
+{ fieldB { x } }
+## On A. We use B's key to resolve our `X`, and we extract C's key.
+## $r = [{__typename: "X", x: "some-x-value"}]
+query ($r: [_Any!]!) { _entities(representations: $r]) { y z } }
+## On C. We can finally look up the field we need.
+## $r = [{__typename: "X", y: "some-y-value", z: "some-z-value"}]
+query ($r: [_Any!]!) { _entities(representations: $r]) { c } }
+```
+
+We only need to do this two-jump process because the fields needed for C's key are not available in B; otherwise a single jump would have worked, like in the owned-field case.
+
+Sometimes a particular extension field needs its parent object's representation to contain more information than its parent type's key requests. In this case, you can include a `requires` argument in the field's `@join__field` listing those required fields (potentially including sub-selections). **All required fields must be resolvable in the owning subgraph** (this restriction is why `requires` is only allowed on extension fields).
+
+```graphql example -- Required fields
+# Supergraph schema
+type Query {
+  fieldA: X @join__field(graph: A)
+}
+
+type X
+    @join__owner(graph: A)
+    @join__type(graph: A, key: "x")
+    @join__type(graph: B, key: "x")
+  {
+  x: String
+  y: String
+  z: String @join__field(graph: B, requires: "y")
+}
+
+# Operation
+{ fieldA { z } }
+# Generated subgraph operations
+## On A. `x` is included because it is B's key for `X`; `y`
+## is included because of the `requires`.
+{ fieldA { x y } }
+## On B..
+## $r = [{__typename: "X", x: "some-x-value", y: "some-y-value"}]
+query ($r: [_Any!]!) { _entities(representations: $r]) { z } }
+```
 
 # Basic Requirements
 
@@ -201,96 +430,6 @@ Fields on root types must always be bound to a subgraph:
 <script>line => line.includes("me: User") || line.includes("images: [Image]")</script>
 ```
 
-
-# Data Model
-
-```mermaid diagram -- The router separates an incoming query into one or more subgraph queries
-graph LR
-  incoming(Incoming Query)-->router(Router)
-  router-->o1(Outbound Query 1)-->s1(subgraph A)
-  router-->o2(Outbound Query 2)-->s2(subgraph B)
-  router-->o3(Outbound Query 3)-->s3(subgraph C)
-```
-
-## Selection set realization
-
-The role of the router is to break apart an incoming query against the published schema into outbound queries against subgraph schemas.
-
-A *realized selection set* is a selection within an inbound query, with particular type bounds, which will be issued against a particular subgraph. We denote the realized type of this selection set as `subgraph::(Type Bounds)`. Within this section, we use the special subgraph name `self` to refer to the exported composed schema.
-
-Within a realized selection set, the router can only query fields which are known to the selection set's subgraph and are valid within the type bounds. As usual with GraphQL execution, a selection on more specific bounds can be acquired by emitting an inline fragment (`... on Subtype`). 
-// TODO: digest and rewrite what this means
-Porting to a different subgraph—to acquire bounds specific to that subgraph, including fields bound to that subgraph—requires a [portal query](#portal-query).
-
-```graphql example -- Query with resolvers and realized selection sets
-              # resolver              | realizes
-              # ---------------------------------------               
-query {       # (root)                -> self::Query
-  albums {    # albums::Query.albums  -> albums::Album
-    user {    # albums::Album.user    -> albums::User
-      name    # auth::User.name       -> String
-    }
-  }
-}
-```
-
-This query requires one portal. The `name` field is not available on `albums::User`, however it is provided by `auth::User`. Since `name` is selected within an `albums::User`, the router must use a [portal](#portal-query) to acquire a selection on `auth::User` and resolve the field.
-
-### Free / Bound fields
-
-Free fields can be resolved by any subgraph which can realize a selection on the parent type. Bound fields can only be resolved by the subgraph they're bound to, which may require [porting](#portability) the selection set between graphs.
-
-### Portability
-
-A type is *portable to* a subgraph if it has a key defined for that subgraph.
-
-```graphql example -- A query crossing subgraph boundaries
-query {
-  me {
-    albums {
-      user {
-        name
-      }
-    }
-  }
-}
-```
-
-Incoming queries which cross subgraph boundaries require "porting" wherever they select a field that is not resolvable by the subgraph of the realized type from which they are selected. In the above example, selecting `me.albums.user.name` crosses such a boundary, since `albums.user` is a selection on `albums::User` and `user.name` is only resolvable by `auth::User.name`.
-
-To resolve this query, `albums::User` must be *portable* to `auth::User`. That is, given a selection on `albums::User`, there must be some way to arrive at a selection on `auth::User`.
-
-If fields have multiple bound resolvers, routers SHOULD select the resolver which does not require crossing subgraph boundaries, if possible.
-
-If crossing subgraph boundaries is unavoidable, routers *must* use a [portal query](#portal-query) to re-enter the type in the destination subgraph.
-
-### Portal query
-
-In order to acquire a selection set on a entity within a subgraph, routers may issue a portal query to the subgraph:
-
-```graphql example -- Portal query
-query {
-  _entities(representations: $representations) {
-    # ...selections
-  }
-}
-```
-
-`representations` MUST be a list of input objects, each of which consist of the `__typename` of the object type or interface along with the result of fetching that subgraph's `key` for the type.
-
-```graphql example -- Portal query with representations
-query {
-  _entities(representations: [
-    { __typename: "Image", url: "http://example.com/1.png"},
-    { __typename: "Image", url: "http://example.com/2.png"},
-  ]) {
-    # ... on Image { ... }
-  }
-}
-```
-
-// TODO: is this correct? How can this possibly work without definining `_entities` resolver?
-The `_entities` resolver need not be explicitly be defined in the subgraph schema. If it is defined, its specified types are ignored. It will be assumed that the resolver is capable of resolving objects and interfaces from any key specified within the supergraph.
 
 # Validations
 
