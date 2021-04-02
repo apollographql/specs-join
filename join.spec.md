@@ -365,7 +365,7 @@ Enumerate subgraphs.
 enum join__Graph
 ```
 
-Documents MUST define a {join__Graph} enum. Each enum value defines a subgraph.
+Documents MUST define a {join__Graph} enum. Each enum value describes a subgraph. Each enum value MUST have a [{@join__graph}](#@join__graph) directive applied to it.
 
 :::[example](photos.graphql#join__Graph) -- Using join__Graph to define endpoints
 
