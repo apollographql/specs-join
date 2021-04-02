@@ -148,7 +148,7 @@ type Query {
 
 ## Fields on the same subgraph as the parent operation
 
-If a field's parent field will be resolved by an operation on the same subgraph, then it can be resolved as part of the same operation, by putting it in a nested selection set on the parent field's subgraph operation. Note that this example contains a {@join__owner} directive on an object type; this will be described later.
+If a field's parent field will be resolved by an operation on the same subgraph, then it can be resolved as part of the same operation, by putting it in a nested selection set on the parent field's subgraph operation. Note that this example contains {@join__owner} and {@join__type} directives on an object type; these will be described later.
 
 ```graphql example -- Fields on the same subgraph as the parent operation
 # Supergraph schema
@@ -156,7 +156,7 @@ type Query {
   fieldA: X @join__field(graph: A)
 }
 
-type X @join__owner(graph: A) {
+type X @join__owner(graph: A) @join__type(graph: A, key: "nestedFieldA") {
   nestedFieldA: String @join__field(graph: A)
 }
 
@@ -178,7 +178,7 @@ type Query {
   fieldB: X @join__field(graph: B)
 }
 
-type X @join__owner(graph: B) {
+type X @join__owner(graph: B) @join__type(graph: B, key: "usuallyBField") {
   usuallyBField: String @join__field(graph: B)
 }
 
