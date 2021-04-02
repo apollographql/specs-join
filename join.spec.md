@@ -256,8 +256,8 @@ type X
     @join__type(graph: B, key: "x")
     @join__type(graph: C, key: "y z")
   {
-  # Because B owns X, we can omit @join__field(graph: B)
-  # from these two fields.
+  # Because A owns X, we can omit @join__field(graph: A)
+  # from these three fields.
   x: String
   y: String
   z: String
