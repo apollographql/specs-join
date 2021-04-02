@@ -355,6 +355,8 @@ Processors MUST validate that you have defined the directives with the same argu
 
 As described in the core specification, all of the directives and enums defined by this schema should be removed from the supergraph's API schema. For example, the {join__Graph} enum should not be visible via introspection.
 
+TODO define field set somewhere?
+
 # Enums
 
 ##! join__Graph
@@ -408,25 +410,29 @@ Every type with a {@join__type} MUST also have a [{@join__owner}](#@join__owner)
 
 ##! @join__field
 
-Join a field with a particular subgraph.
+Specify the graph that can resolve the field.
 
 ```graphql definition
 directive @join__field(
-  graph: join__Graph
-  requires: String!
-  provides: String!
+  graph: join__Graph!
+  requires: String
+  provides: String
 ) on FIELD_DEFINITION
 ```
 
-The parent type MUST be {@join__type}ed with the specified `graph:`, unless it is a root type.
+The field's parent type MUST be annotated with a {@join__type} with the same value of `graph` as this directive, unless the parent type is a [root operation type](http://spec.graphql.org/draft/#sec-Root-Operation-Types).
 
-Any field definitions without a {@join__field} directive are assumed to be resolvable in any subgraph which {@join__type}s the parent type.
+If a field is not annotated with {@join__field} and its parent type is annotated with `@join__owner(graph: G)`, then a processor MUST treat the field as if it is annotated with `@join__field(graph: G)`. If a field is not annotated with {@join__field} and its parent type is not annotated with {@join__owner} (ie, the parent type is a value type) then it MUST be resolvable in any subgraph that can resolve values of its parent type.
 
 :::[example](photos.graphql#User...Image) -- Using {@join__field} to join fields to subgraphs
 
-Fields on root types must always be bound to a subgraph:
+Every field on a root operation type MUST be annotated with {@join__field}.
 
 :::[example](photos.graphql#Query) -- {@join__field} on root fields
+
+The `requires` argument MUST only be specified on fields whose parent type has a [{@join__owner}](#@join__owner) directive specifying a different `graph` than this {@join__field} directive does. All fields (including nested fields) mentioned in this field set must be resolvable in the parent type's owning subgraph. When constructing a representation for a parent object of this field, a router will include the fields selected in this `requires` argument in addition to the appropriate `key` for the parent type.
+
+The `provides` argument specifies fields that can be resolved in operations run on subgraph `graph` as a nested selection under this field, even if they ordinarily can only be resolved on other subgraphs.
 
 ##! @join__owner
 
