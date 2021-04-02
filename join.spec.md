@@ -406,20 +406,6 @@ When this directive is placed on a type `T`, it means that subgraph `graph` MUST
 
 Every type with a {@join__type} MUST also have a [{@join__owner}](#@join__owner) directive. Any type with a [{@join__owner}](#@join__owner) directive MUST have at least one {@join__type} directive with the same `graph` as the [{@join__owner}](#@join__owner) directive (the "owning graph"), and MUST have at most one {@join__type} directive for each `graph` value other than the owning graph. Any value that appears as a `key` in a {@join__type} directive with a `graph` value other than the owning graph must also appear as a `key` in a {@join__type} directive with `graph` equal to the owning graph.
 
-##! @join__owner
-
-Specify the graph which owns the object type.
-
-```graphql definition
-directive @join__owner(graph: join__Graph!) on OBJECT
-```
-
-Object types with keys MUST be owned by a subgraph. The owning subgraph:
-  - MUST be able to resolve all of the object's keys for any subgraph 
-  - MUST be able to resolve all fields referenced via [requires](@join__field/requires)
-
-Note: Type ownership is currently slated for removal in a future version of this spec. It is RECOMMENDED that router implementations consider approaches which function in the absence of these restrictions.
-
 ##! @join__field
 
 Join a field with a particular subgraph.
@@ -441,6 +427,19 @@ Any field definitions without a {@join__field} directive are assumed to be resol
 Fields on root types must always be bound to a subgraph:
 
 :::[example](photos.graphql#Query) -- {@join__field} on root fields
+
+##! @join__owner
+
+Specify the graph which owns the object type.
+
+```graphql definition
+directive @join__owner(graph: join__Graph!) on OBJECT
+```
+
+The descriptions of [{@join__type}](#@join__type) and [{@join__field}](#@join__field) describes requirements on how {@join__owner} relates to {@join__type} and the `requires` argument to {@join__field}.
+
+Note: Type ownership is currently slated for removal in a future version of this spec. It is RECOMMENDED that router implementations consider approaches which function in the absence of these restrictions. The [data model](#sec-Owned-fields-on-owned-types) explains how the current router's query planning algorithm depends on concept of type ownership.
+
 
 ```html diagram
 <script>line => line.includes("me: User") || line.includes("images: [Image]")</script>
