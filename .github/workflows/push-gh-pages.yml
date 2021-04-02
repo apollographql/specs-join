@@ -8,15 +8,15 @@ jobs:
         uses: actions/checkout@v2.3.1
         with:
           persist-credentials: true
-
-      - name: Deploy 🚀
-        if: github.ref != 'refs/heads/gh-pages'
+      - name: Use Node.js 15.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15.x
+      - run: npm install
+      - run: npm run build
+      - name: Find Version 🕵🏽‍♀️
+        id: find_version
         run: |
-          git config --global user.email "spec-robot@apollographql.com"
-          git config --global user.name "Spec Robot"
-          git fetch origin gh-pages || true
-          git checkout gh-pages || git checkout -b gh-pages
-
           # find the name of the branch or tag and bail if
           # we can't
           #
@@ -32,18 +32,11 @@ jobs:
           version=$(find * | tail -n 1)
           popd
           rm -rf .scratch
-
-          # do a clean checkout
-          rm -rf $version
-          git clone . --branch $version --single-branch $version
-          
-          # retain git metadata but hide it from git
-          mv $version/.git $version/_git
-          
-          # write a timestamp
-          date > $version/__timestamp__
-
-          # push it all
-          git add .
-          git commit -m "Updated $version"
-          git push origin gh-pages
+          echo "::set-output name=version::${version}"
+      - name: Deploy 🚀
+        if: github.ref != 'refs/heads/gh-pages'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./.dist
+          destination_dir: ${{ steps.find_version.outputs.version }}        
