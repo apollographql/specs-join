@@ -10,7 +10,7 @@ directive @join__owner(graph: join__Graph!) on OBJECT
 
 directive @join__type(
   graph: join__Graph!
-  key: String
+  key: String!
 ) repeatable on OBJECT | INTERFACE
 
 directive @join__field(

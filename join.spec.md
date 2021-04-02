@@ -402,11 +402,9 @@ Declares an entity key for a type on a subgraph.
 ```graphql definition
 directive @join__type(
   graph: join__Graph!
-  key: String
+  key: String!
 ) repeatable on OBJECT | INTERFACE
 ```
-
-TODO glasser doesn't understand what this means without a key. The current composer doesn't ever produce null/missing key.
 
 When this directive is placed on a type `T`, it means that subgraph `graph` MUST be able to:
 - Resolve selections on objects of the given type that contain the field set in `key`
