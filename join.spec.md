@@ -353,6 +353,8 @@ Processors MUST validate that you have defined the directives with the same argu
 
 :::[definition](join.spec.graphql)
 
+Processors MUST validate that the schema contains an enum named {join__Graph}; see [its section below](#join__Graph) for other required properties of this enum.
+
 As described in the core specification, all of the directives and enums defined by this schema should be removed from the supergraph's API schema. For example, the {join__Graph} enum should not be visible via introspection.
 
 TODO define field set somewhere?
