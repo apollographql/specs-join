@@ -1,4 +1,5 @@
-type Album {
+type Album @key(fields: "id") {
+  id: ID!
   user: User
   photos: [Image!]
 }
