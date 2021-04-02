@@ -48,7 +48,7 @@ The meaning of the `@join__*` directives is explored in the [Directives](#sec-Di
 
 The example represents **one way** to compose three input schemas, based on [federated composition](https://www.apollographql.com/docs/federation/federation-spec/). These schemas are provided for purposes of illustration only. This spec places no normative requirements on composer input. It does not require that subgraphs use federated composition directives, and it does not place any requirements on *how* the composer builds a supergraph, except to say that the resulting schema must be a valid supergraph document.
 
-[auth](./albums.graphql) provides the `User` type and `Query.me`.
+[auth](./auth.graphql) provides the `User` type and `Query.me`.
 
 :::[example](auth.graphql) -- Auth schema
 
