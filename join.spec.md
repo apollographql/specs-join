@@ -185,16 +185,16 @@ type Product @join__owner(graph: PRODUCTS) @join__type(graph: PRODUCTS, key: "id
   priceCents: Int! @join__field(graph: PRODUCTS)
 }
 
-# Operation
+# Operation showing that `priceCents` is typically resolved on PRODUCTS
 { randomProduct { priceCents } }
 # Generated subgraph operations
-## On B
+## On PRODUCTS
 { randomProduct { priceCents } }
 
-# Operation
+# Operation showing that `provides` allows `priceCents` to be resolved on MARKETING
 { todaysPromotion { priceCents } }
 # Generated subgraph operations
-## On A
+## On MARKETING
 { todaysPromotion { priceCents } }
 ```
 
