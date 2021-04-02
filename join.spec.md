@@ -387,7 +387,7 @@ The {@join__graph} directive MUST be applied to each enum value on {join__Graph}
 
 ##! @join__type
 
-Join a type to a subgraph, optionally providing an entity key.
+Declares an entity key for a type on a subgraph.
 
 ```graphql definition
 directive @join__type(
@@ -396,12 +396,15 @@ directive @join__type(
 ) repeatable on OBJECT | INTERFACE
 ```
 
-// TODO: rename portal query?
-Keys will be passed as `representations` within a [portal query](#portal-query) to [port](#portability) a selection set between subgraphs.
+TODO glasser doesn't understand what this means without a key. The current composer doesn't ever produce null/missing key.
+
+When this directive is placed on a type `T`, it means that subgraph `graph` MUST be able to:
+- Resolve selections on objects of the given type that contain the field set in `key`
+- Use `Query._entities` to resolve representations of objects containing `__typename: "T"` and the fields from the field set in `key`
 
 :::[example](photos.graphql#Image) -- Using {@join__type} to specify subgraph keys
 
-Multiple {@join__type}s can be specified for different subgraphs. It is an error to {@join__type} an object against the same subgraph multiple times.
+Every type with a {@join__type} MUST also have a [{@join__owner}](#@join__owner) directive. Any type with a [{@join__owner}](#@join__owner) directive MUST have at least one {@join__type} directive with the same `graph` as the [{@join__owner}](#@join__owner) directive (the "owning graph"), and MUST have at most one {@join__type} directive for each `graph` value other than the owning graph. Any value that appears as a `key` in a {@join__type} directive with a `graph` value other than the owning graph must also appear as a `key` in a {@join__type} directive with `graph` equal to the owning graph.
 
 ##! @join__owner
 
