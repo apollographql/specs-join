@@ -20,7 +20,7 @@ graph LR
   style core fill:none,stroke:fuchsia,color:fuchsia;
 ```
 
-This document defines schema elements for describing [core schemas](https://specs.apollo.dev/core/v0.1) which **join** multiple **subgraph** schemas into a single **supergraph** schema.
+This document defines a [core feature](https://specs.apollo.dev/core/v0.1) named `join` for describing [core schemas](https://specs.apollo.dev/core/v0.1) which **join** multiple **subgraph** schemas into a single **supergraph** schema.
 
 This specification provides machinery to:
 - define [subgraphs](#def-subgraph) with the {join__Graph} enum and the {@join__graph} directive
@@ -340,7 +340,7 @@ query ($r: [_Any!]!) { _entities(representations: $r]) { z } }
 
 # Basic Requirements
 
-Schemas using {@join} MUST be valid [core schema documents](https://specs.apollo.dev/core/v0.1) with {@core} directives referencing this specification.
+Schemas using the `join` core feature MUST be valid [core schema documents](https://specs.apollo.dev/core/v0.1) with {@core} directives referencing the `core` specification and this specification.
 
 :::[example](photos.graphql#schema) -- {@core} directives for supergraphs
 
@@ -358,7 +358,7 @@ Documents MUST define a {join__Graph} enum. Each enum value defines a subgraph.
 
 :::[example](photos.graphql#join__Graph) -- Using join__Graph to define endpoints
 
-The {join__Graph} enum is used as input to {@join} directives which link fields and types to subgraphs.
+The {join__Graph} enum is used as input to the [{@join__owner}](#@join__owner), [{@join__field}](#@join__field), and [{@join__type}](#@join__type) directives.
 
 # Directives
 
@@ -388,7 +388,7 @@ Keys will be passed as `representations` within a [portal query](#portal-query) 
 
 :::[example](photos.graphql#Image) -- Using {@join__type} to specify subgraph keys
 
-Multiple {@join}s can be specified for different subgraphs. It is an error to {@join} an object against the same subgraph multiple times.
+Multiple {@join__type}s can be specified for different subgraphs. It is an error to {@join__type} an object against the same subgraph multiple times.
 
 ##! @join__owner
 
@@ -416,15 +416,15 @@ directive @join__field(
 ) on FIELD_DEFINITION
 ```
 
-The parent type MUST be {@join}ed with the specified `graph:`.
+The parent type MUST be {@join__type}ed with the specified `graph:`, unless it is a root type.
 
-Any field definitions without a {@join} directive are assumed to be resolvable in any subgraph which {@join}s the parent type.
+Any field definitions without a {@join__field} directive are assumed to be resolvable in any subgraph which {@join__type}s the parent type.
 
 :::[example](photos.graphql#User...Image) -- Using {@join__field} to join fields to subgraphs
 
 Fields on root types must always be bound to a subgraph:
 
-:::[example](photos.graphql#Query) -- {@join} on root fields
+:::[example](photos.graphql#Query) -- {@join__field} on root fields
 
 ```html diagram
 <script>line => line.includes("me: User") || line.includes("images: [Image]")</script>
