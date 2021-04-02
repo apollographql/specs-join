@@ -147,7 +147,7 @@ type Query {
 
 ## Fields on the same subgraph as the parent operation
 
-If this field's parent field will be resolved by an operation on the same subgraph, then this field can be resolved as part of the same operation, by putting it in a nested selection set on the parent field's subgraph operation. Note that this example contains a {@join__owner} directive on an object type; this will be described later.
+If a field's parent field will be resolved by an operation on the same subgraph, then it can be resolved as part of the same operation, by putting it in a nested selection set on the parent field's subgraph operation. Note that this example contains a {@join__owner} directive on an object type; this will be described later.
 
 ```graphql example -- Fields on the same subgraph as the parent operation
 # Supergraph schema
