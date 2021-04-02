@@ -25,7 +25,7 @@ This document defines a [core feature](https://specs.apollo.dev/core/v0.1) named
 This specification provides machinery to:
 - define [subgraphs](#def-subgraph) with the {join__Graph} enum and the {@join__graph} directive
 - assign fields to subgraphs with {@join__field}
-- declare additional data required and provided by subgraph field resolvers with the [`requires`](#@join__field/requires) and [`provides`](#@join__field/provides) arguments
+- declare additional data required and provided by subgraph field resolvers with the `requires` and `provides` arguments to {@join__field}
 - assign keys and ownership to types with {@join__type} and {@join__owner}
 
 # How to read this document
