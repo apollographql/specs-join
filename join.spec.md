@@ -34,7 +34,7 @@ This document uses [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) guidance reg
 
 ## What this document isn't
 
-This document specifies only the structure and semantics of supergraphs. It's expected that a supergraph will generally be the output of a compilation process which composes subgraph schemas. The mechanics of that process are not specified normatively here. Conforming implementations may choose any approach they like, so long as the result conforms to the requirements of this document.
+This document specifies only the structure and semantics of supergraphs. It's expected that a supergraph will generally be the output of a compilation process which composes subgraphs. The mechanics of that process are not specified normatively here. Conforming implementations may choose any approach they like, so long as the result conforms to the requirements of this document.
 
 # Example: Photo Library
 
