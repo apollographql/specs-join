@@ -1,15 +1,14 @@
 # Join
 
-<h2>for defining *supergraphs* which join multiple *subgraphs*</h2> 
+<h2>for defining *supergraphs* which join multiple *subgraphs*</h2>
 
 ```raw html
 <table class=spec-data>
   <tr><td>Status</td><td>Draft</td>
   <tr><td>Version</td><td>0.1</td>
 </table>
-<link rel=stylesheet href=/apollo-dark.css>
-<link rel=stylesheet href=/tron.css>
-<script type=module async defer src=/install-nav.js></script>
+<link rel=stylesheet href=/apollo-light.css>
+<script type=module async defer src=/inject-logo.js></script>
 ```
 
 ```mermaid diagram -- Schema joining multiple subgraphs
@@ -68,7 +67,7 @@ flowchart TB
     subgraph A [subgraph A]
       schemaA([schema A])
       endpointA([endpoint A])
-    end    
+    end
     subgraph B [subgraph B]
       schemaB([schema B])
       endpointB([endpoint B])
@@ -83,7 +82,7 @@ flowchart TB
     supergraph([Supergraph])
     subgraph "Consumer ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
       Router
-    end    
+    end
     A-->Composer
     B-->Composer
     C-->Composer
