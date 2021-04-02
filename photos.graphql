@@ -33,23 +33,26 @@ type Query {
 }
 
 type User
-  @join__owner(graph: AUTH)
-  @join__type(graph: AUTH, key: "id")
-  @join__type(graph: ALBUMS, key: "id") {
-  id: ID @join__field(graph: AUTH)
+    @join__owner(graph: AUTH)
+    @join__type(graph: AUTH, key: "id")
+    @join__type(graph: ALBUMS, key: "id") {
+  id: ID! @join__field(graph: AUTH)
   name: String @join__field(graph: AUTH)
   albums: [Album!] @join__field(graph: ALBUMS)
 }
 
-type Album @join__owner(graph: ALBUMS) {
+type Album
+    @join__owner(graph: ALBUMS)
+    @join__types(graph: ALBUMS, key: "id") {
+  id: ID!
   user: User
   photos: [Image!]
 }
 
 type Image
-  @join__owner(graph: IMAGES)
-  @join__type(graph: ALBUMS, key: "url")
-  @join__type(graph: IMAGES, key: "url") {
+    @join__owner(graph: IMAGES)
+    @join__type(graph: ALBUMS, key: "url")
+    @join__type(graph: IMAGES, key: "url") {
   url: Url @join__field(graph: IMAGES)
   type: MimeType @join__field(graph: IMAGES)
   albums: [Album!] @join__field(graph: ALBUMS)
