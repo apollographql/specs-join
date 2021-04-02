@@ -102,7 +102,7 @@ flowchart TB
 
 <a namme=def-router>**Routers**</a> are consumers which serve a composed schema as a GraphQL endpoint. *This definition is non-normative.*
   - Graph routers differ from standard GraphQL endpoints in that they are not expected to resolve fields or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch, nor does it attempt to normatively separate routers from other supergraph consumers.
-  - Routers will often omit schema elements from the schema they present to clients via introspection ({join__Graph}, for example, will typically be omitted)
+  - Routers will often omit schema elements from the API schema that is used to validate client operations and that they present to clients via introspection ({join__Graph}, for example, will typically be omitted)
 
 <a name=def-endpoint>**Endpoints**</a> are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
 
@@ -353,6 +353,7 @@ Processors MUST validate that you have defined the directives with the same argu
 
 :::[definition](join.spec.graphql)
 
+As described in the core specification, all of the directives and enums defined by this schema should be removed from the supergraph's API schema. For example, the {join__Graph} enum should not be visible via introspection.
 
 # Enums
 
