@@ -20,7 +20,7 @@ graph LR
   style core fill:none,stroke:fuchsia,color:fuchsia;
 ```
 
-This document defines schema elements for describing [core schemas](/core/v0.1) which **join** multiple **subgraph** schemas into a single **supergraph** schema.
+This document defines schema elements for describing [core schemas](https://specs.apollo.dev/core/v0.1) which **join** multiple **subgraph** schemas into a single **supergraph** schema.
 
 This specification provides machinery to:
 - define [subgraphs](#def-subgraph) with the {join__Graph} enum and the {@join__graph} directive
@@ -340,7 +340,7 @@ query ($r: [_Any!]!) { _entities(representations: $r]) { z } }
 
 # Basic Requirements
 
-Schemas using {@join} MUST be valid [core schema documents](/core/v0.1) with {@core} directives referencing this specification.
+Schemas using {@join} MUST be valid [core schema documents](https://specs.apollo.dev/core/v0.1) with {@core} directives referencing this specification.
 
 :::[example](photos.graphql#schema) -- {@core} directives for supergraphs
 
