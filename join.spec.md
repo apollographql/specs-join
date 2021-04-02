@@ -126,7 +126,7 @@ In order for the router to send an operation that resolves a given field on a pa
 
 ## Root fields
 
-If this field appears at the root of the overall operation (query or mutation), then the field can just be placed at the root of the subgraph operation.
+If a field appears at the root of the overall operation (query or mutation), then it can be placed at the root of the subgraph operation.
 
 ```graphql example -- Root fields
 # Supergraph schema
