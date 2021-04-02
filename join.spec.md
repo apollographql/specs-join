@@ -110,9 +110,7 @@ flowchart TB
 
 This spec does not place any requirements on subgraph schemas. Generally, they may be of any shape. In particular, subgraph schemas do not need to be supergraphs themselves or to follow this spec in any way; neither is it an error for them to do so. Composers MAY place additional requirements on subgraph schemas to aid in composition; composers SHOULD document any such requirements.
 
-# Data Model
-
-TODO maybe this should be called something more like "Overview" or "Graph Routing in a Supergraph" or something?
+# Overview
 
 *This section is non-normative.* It describes the motivation behind the directives defined by this specification.
 
