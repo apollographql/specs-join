@@ -377,7 +377,7 @@ enum join__Graph
 
 Documents MUST define a {join__Graph} enum. Each enum value describes a subgraph. Each enum value MUST have a [{@join__graph}](#@join__graph) directive applied to it.
 
-:::[example](photos.graphql#join__Graph) -- Using join__Graph to define endpoints
+:::[example](photos.graphql#join__Graph) -- Using join__Graph to define subgraphs and their endpoints
 
 The {join__Graph} enum is used as input to the [{@join__owner}](#@join__owner), [{@join__field}](#@join__field), and [{@join__type}](#@join__type) directives.
 
