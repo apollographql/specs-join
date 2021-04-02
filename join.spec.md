@@ -102,7 +102,7 @@ flowchart TB
 
 <a namme=def-router>**Routers**</a> are consumers which serve a composed schema as a GraphQL endpoint. *This definition is non-normative.*
   - Graph routers differ from standard GraphQL endpoints in that they are not expected to resolve fields or communicate with (non-GraphQL) backend services on their own. Instead, graph routers receive GraphQL requests and service them by performing additional GraphQL requests. This spec provides guidance for implementing routers, but does not require particular implementations of query separation or dispatch, nor does it attempt to normatively separate routers from other supergraph consumers.
-  - Routers will often omit schema elements from the [API schema](https://specs.apollo.dev/core/v0.1/#sec-Parts-of-a-Core-Schema) that is used to validate client operations and that they present to clients via introspection ({join__Graph}, for example, will typically be omitted)
+  - Routers expose an [API schema](https://specs.apollo.dev/core/v0.1/#sec-Parts-of-a-Core-Schema) to clients that is creating by transforming the supergraph schema (for example, the {join__Graph} enum and the directives described in this spec are removed from the API schema). The API schema is used to validate client operations and may be exposed to clients via introspection.
 
 <a name=def-endpoint>**Endpoints**</a> are running servers which can resolve GraphQL queries against a schema. In this version of the spec, endpoints must be URLs, typically http/https URLs.
 
