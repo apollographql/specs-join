@@ -247,15 +247,15 @@ type Query {
 }
 
 type X
-    @join__owner(graph: A)
-    # As the owner, A is allowed to have more than one key.
-    @join__type(graph: A, key: "x")
-    @join__type(graph: A, key: "y z")
-    # As non-owners, B and C can only have one key each and
-    # they must match a key from A.
-    @join__type(graph: B, key: "x")
-    @join__type(graph: C, key: "y z")
-  {
+  @join__owner(graph: A)
+  # As the owner, A is allowed to have more than one key.
+  @join__type(graph: A, key: "x")
+  @join__type(graph: A, key: "y z")
+  # As non-owners, B and C can only have one key each and
+  # they must match a key from A.
+  @join__type(graph: B, key: "x")
+  @join__type(graph: C, key: "y z")
+{
   # Because A owns X, we can omit @join__field(graph: A)
   # from these three fields.
   x: String
@@ -284,15 +284,15 @@ type Query {
 }
 
 type X
-    @join__owner(graph: A)
-    # As the owner, A is allowed to have more than one key.
-    @join__type(graph: A, key: "x")
-    @join__type(graph: A, key: "y z")
-    # As non-owners, B and C can only have one key each and
-    # they must match a key from A.
-    @join__type(graph: B, key: "x")
-    @join__type(graph: C, key: "y z")
-  {
+  @join__owner(graph: A)
+  # As the owner, A is allowed to have more than one key.
+  @join__type(graph: A, key: "x")
+  @join__type(graph: A, key: "y z")
+  # As non-owners, B and C can only have one key each and
+  # they must match a key from A.
+  @join__type(graph: B, key: "x")
+  @join__type(graph: C, key: "y z")
+{
   x: String
   y: String
   z: String
@@ -325,10 +325,10 @@ type Query {
 }
 
 type X
-    @join__owner(graph: A)
-    @join__type(graph: A, key: "x")
-    @join__type(graph: B, key: "x")
-  {
+  @join__owner(graph: A)
+  @join__type(graph: A, key: "x")
+  @join__type(graph: B, key: "x")
+{
   x: String
   y: String
   z: String @join__field(graph: B, requires: "y")
