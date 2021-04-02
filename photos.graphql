@@ -4,8 +4,6 @@ schema
   query: Query
 }
 
-scalar core__FieldSet
-
 directive @core(feature: String!) repeatable on SCHEMA
 
 directive @join__owner(graph: join__Graph!) on OBJECT
@@ -17,8 +15,8 @@ directive @join__type(
 
 directive @join__field(
   graph: join__Graph
-  requires: core__FieldSet
-  provides: core__FieldSet
+  requires: String
+  provides: String
 ) on FIELD_DEFINITION
 
 directive @join__graph(name: String!, url: String!) on ENUM_VALUE
