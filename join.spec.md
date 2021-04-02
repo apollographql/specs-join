@@ -169,30 +169,33 @@ type X @join__owner(graph: A) @join__type(graph: A, key: "nestedFieldA") {
 
 ## Fields provided by the parent field
 
-When resolving a field to a composite type (object, interface, or union), it is sometimes easy to calculate the values of nested fields inside that object even if those nested fields are ordinarily resolved in a different subgraph. When this is the case, you can include a `provides` argument in the `@join__field` listing these "pre-calculated" fields. The router can now resolve these fields in the "providing" subgraph instead of in the subgraph that would usually be used to resolve those fields.
+Sometimes, a subgraph {G} may be capable of resolving a field that is ordinarily resolved in a different subgraph if the field's parent object was resolved in {G}. For example, the `Product.priceCents: Int!` field is usually resolved by the Prodcuts subgraph, which knows the `priceCents` for every `Product` in your system. In the Marketing subgraph, there is a `Query.todaysPromotion: Product!` field; while the Marketing subgraph cannot determine the `priceCents` of every product in your system, it does know the `priceCents` of the promoted products, and so the Marketing subgraph can resolve operations like `{ todaysPromotion { priceCents } }`.
+
+When this is the case, you can include a `provides` argument in the `@join__field` listing these "pre-calculated" fields. The router can now resolve these fields in the "providing" subgraph instead of in the subgraph that would usually be used to resolve those fields.
 
 ```graphql example -- Provided fields
 # Supergraph schema
 type Query {
-  fieldA: X @join__field(graph: A, provides: "usuallyBField")
-  fieldB: X @join__field(graph: B)
+  todaysPromotion: Product! @join__field(graph: MARKETING, provides: "priceCents")
+  randomProduct: Product! @join__field(graph: PRODUCTS)
 }
 
-type X @join__owner(graph: B) @join__type(graph: B, key: "usuallyBField") {
-  usuallyBField: String @join__field(graph: B)
+type Product @join__owner(graph: PRODUCTS) @join__type(graph: PRODUCTS, key: "id") {
+  id: ID! @join__field(graph: PRODUCTS)
+  priceCents: Int! @join__field(graph: PRODUCTS)
 }
 
 # Operation
-{ fieldB { usuallyBField } }
+{ randomProduct { priceCents } }
 # Generated subgraph operations
 ## On B
-{ fieldB { usuallyBField } }
+{ randomProduct { priceCents } }
 
 # Operation
-{ fieldA { usuallyBField } }
+{ todaysPromotion { priceCents } }
 # Generated subgraph operations
 ## On A
-{ fieldA { usuallyBField } }
+{ todaysPromotion { priceCents } }
 ```
 
 ## Fields on value types
