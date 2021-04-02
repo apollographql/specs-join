@@ -345,6 +345,15 @@ Schemas using the `join` core feature MUST be valid [core schema documents](http
 
 :::[example](photos.graphql#schema) -- {@core} directives for supergraphs
 
+As described in the [core schema specification](https://specs.apollo.dev/core/v0.1/#sec-Prefixing), your schema may use a prefix other than `join` for all of the directive and enum names defined by this specification by including an `as` argument to the `@core` directive which references this specification. All references to directive and enum names in this specification MUST be interpreted as referring to names with the appropriate prefix chosen within your schema.
+
+In order to use the directives described by this specification, GraphQL requires you to include their definitions in your schema.
+
+Processors MUST validate that you have defined the directives with the same arguments, locations, and `repeatable` flag as given below.
+
+:::[definition](join.spec.graphql)
+
+
 # Enums
 
 ##! join__Graph

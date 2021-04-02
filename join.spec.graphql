@@ -1,26 +1,14 @@
-schema
-  @core(using: "https://specs.apollo.dev/core/v0.1")
-  @core(using: "https://specs.apollo.dev/join/v0.1") {
-  query: Query
-}
-
 directive @join__owner(graph: join__Graph) on OBJECT
 
 directive @join__type(
-  graph: join__Graph!
-  key: String
+  graph: join__Graph!,
+  key: String,
 ) repeatable on OBJECT | INTERFACE
 
 directive @join__field(
-  graph: join__Graph
-  requires: String
-  provides: String
+  graph: join__Graph,
+  requires: String,
+  provides: String,
 ) on FIELD_DEFINITION
 
 directive @join__graph(name: String!, url: String!) on ENUM_VALUE
-
-# enum join__Graph {
-#   # EnumValues within join__Graph must be generated. They should appear as follows,
-#   # using the @join__graph directive to capture subgraph metadata:
-#   # IMAGES @join__graph(name: "images", url: "https://images.api.com")
-# }
