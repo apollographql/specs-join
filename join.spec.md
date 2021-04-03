@@ -117,7 +117,7 @@ A supergraph schema describes a GraphQL schema that can be served by a router. T
 
 The directives described in this specification are designed for a particular query planning algorithm, and so there are some restrictions on how they can be combined that originate from the requirements of this algorithm. For example, this specification describes a concept of [type ownership](#sec-Owned-fields-on-owned-types) which exists not because we believe it describes the ideal method of structuring your subgraphs, but because this query planning algorithm depends on type ownership. We hope that future versions of this specification can relax some of these restrictions. 
 
-Each supergraph schema contains a list of the subgraphs. The [{join__Graph}](#join__Graph) enum represents this list with an enum value for each subgraph. Each enum value is annotated with a [{@join__graph}](#@join__graph) directive telling the router what endpoint can be used to reach the subgraph and a name for the subgraph that can be used in representations of query plans and diagnostic messages.
+Each supergraph schema contains a list of the subgraphs. The [{join__Graph}](#join__Graph) enum represents this list with an enum value for each subgraph. Each enum value is annotated with a [{@join__graph}](#@join__graph) directive telling the router what endpoint can be used to reach the subgraph, and giving the subgraph a human-readable name that can be used for purposes such as query plan visualization and server logs.
 
 To resolve a field, the router needs to know to which subgraphs it can delegate the field's resolution. One explicit way to indicate this in a supergraph schema is by annotating the field with a [{@join__field}](#@join__field) directive specifying which subgraph should be used to resolve that field. (There are other ways of indicating which subgraphs can resolve a field which will be described later.)
 
@@ -392,7 +392,7 @@ directive @join__graph(name: String!, url: String!) on ENUM_VALUE
 
 :::[example](photos.graphql#join__Graph) -- Using {@join__graph} to declare subgraph metadata on the {join__Graph} enum values.
 
-The {@join__graph} directive MUST be applied to each enum value on {join__Graph}, and nowhere else. Each application of {@join__graph} MUST have a distinct value for the `name` argument; this name is an arbitrary non-empty string that may be used in representations of query plans and diagnostic messages. The `url` argument is an endpoint that can resolve GraphQL queries for the subgraph.
+The {@join__graph} directive MUST be applied to each enum value on {join__Graph}, and nowhere else. Each application of {@join__graph} MUST have a distinct value for the `name` argument; this name is an arbitrary non-empty string that can be used as a human-readable identifier which may be used for purposes such as query plan visualization and server logs. The `url` argument is an endpoint that can resolve GraphQL queries for the subgraph.
 
 ##! @join__type
 
