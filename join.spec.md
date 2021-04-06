@@ -86,8 +86,8 @@ flowchart TB
     A-->Composer
     B-->Composer
     C-->Composer
-    Composer-->joinSchema
-    joinSchema-->Router
+    Composer-->supergraphSchema([Supergraph Schema])
+    supergraphSchema-->Router
     Router-->published([Published Schema])
     published-->Clients
     Clients-->Router
