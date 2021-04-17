@@ -1,4 +1,4 @@
-directive @join__owner(graph: join__Graph) on OBJECT
+directive @join__owner(graph: join__Graph!) on OBJECT
 
 directive @join__type(
   graph: join__Graph!,

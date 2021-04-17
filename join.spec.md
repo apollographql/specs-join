@@ -7,15 +7,16 @@
   <tr><td>Status</td><td>Draft</td>
   <tr><td>Version</td><td>0.1</td>
 </table>
-<link rel=stylesheet href=/apollo-light.css>
-<script type=module async defer src=/inject-logo.js></script>
+<link rel=stylesheet href=https://specs.apollo.dev/apollo-light.css>
+<script type=module async defer src=https://specs.apollo.dev/inject-logo.js></script>
 ```
 
 ```mermaid diagram -- Schema joining multiple subgraphs
 graph LR
-  s1(auth.graphql)-->core(composed schema: photos.graphql)
-  s2(images.graphql)-->core
-  s3(albums.graphql)-->core
+  classDef bg fill:none,color:#22262E;
+  s1(auth.graphql):::bg-->core(composed schema: photos.graphql)
+  s2(images.graphql):::bg-->core
+  s3(albums.graphql):::bg-->core
   style core fill:none,stroke:fuchsia,color:fuchsia;
 ```
 
@@ -64,33 +65,51 @@ The example represents **one way** to compose three input schemas, based on [fed
 
 ```mermaid diagram -- Actors and roles within an example composition pipeline
 flowchart TB
+    classDef bg fill:#EBE6FF;
     subgraph A [subgraph A]
-      schemaA([schema A])
-      endpointA([endpoint A])
+      schemaA([schema A]):::bg
+      style schemaA color:#000
+      endpointA([endpoint A]):::bg
+      style endpointA color:#000
     end
+    style A fill:#FCFDFF,stroke:#CAD0D8,color:#777F8E;
     subgraph B [subgraph B]
-      schemaB([schema B])
-      endpointB([endpoint B])
+      schemaB([schema B]):::bg
+      style schemaB color:#000
+      endpointB([endpoint B]):::bg
+      style endpointB color:#000
     end
+    style B fill:#FCFDFF,stroke:#CAD0D8,color:#777F8E;
     subgraph C [subgraph C]
-      schemaC([schema C])
-      endpointC([endpoint C])
+      schemaC([schema C]):::bg
+      style schemaC color:#000
+      endpointC([endpoint C]):::bg
+      style endpointC color:#000
     end
-    subgraph "Producer ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+    style C fill:#FCFDFF,stroke:#CAD0D8,color:#777F8E;
+    subgraph producer["Producer ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"]
       Composer
+      style Composer color:#000
     end
-    supergraph([Supergraph])
-    subgraph "Consumer ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+    style producer fill:#FCFDFF,stroke:#CAD0D8,color:#777F8E;
+    supergraph([Supergraph]):::bg
+    style supergraph color:#000
+    subgraph consumer["Consumer ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"]
       Router
+      style Router color:#000
     end
-    A-->Composer
-    B-->Composer
-    C-->Composer
-    Composer-->supergraphSchema([Supergraph Schema])
-    supergraphSchema-->Router
-    Router-->published([Published Schema])
-    published-->Clients
-    Clients-->Router
+    style consumer fill:#FCFDFF,stroke:#CAD0D8,color:#777F8E;
+    A-->Composer:::bg
+    B-->Composer:::bg
+    C-->Composer:::bg
+    Composer-->supergraphSchema([Supergraph Schema]):::bg
+    style supergraphSchema color:#000
+    supergraphSchema-->Router:::bg
+    Router-->published([Published Schema]):::bg
+    style published color:#000
+    published-->Clients:::bg
+    style Clients color:#000
+    Clients-->Router:::bg
 ```
 
 <a name=def-producer>**Producers**</a> generate supergraphs. This spec places requirements on supergraph producers.
