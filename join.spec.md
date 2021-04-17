@@ -7,8 +7,8 @@
   <tr><td>Status</td><td>Draft</td>
   <tr><td>Version</td><td>0.1</td>
 </table>
-<link rel=stylesheet href=/apollo-light.css>
-<script type=module async defer src=/inject-logo.js></script>
+<link rel=stylesheet href=https://specs.apollo.dev/apollo-light.css>
+<script type=module async defer src=https://specs.apollo.dev/inject-logo.js></script>
 ```
 
 ```mermaid diagram -- Schema joining multiple subgraphs
