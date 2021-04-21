@@ -24,9 +24,9 @@ This document defines a [core feature](https://specs.apollo.dev/core/v0.1) named
 
 This specification provides machinery to:
 - define [subgraphs](#def-subgraph) with the {join__Graph} enum and the {@join__graph} directive
-- assign fields to subgraphs with {@join__field}
+- assign fields to subgraphs with the {@join__field} directive
 - declare additional data required and provided by subgraph field resolvers with the `requires` and `provides` arguments to {@join__field}
-- assign [keys and ownership](#sec-Owned-fields-on-owned-types) to types with {@join__type} and {@join__owner}
+- assign [keys and ownership](#sec-Owned-fields-on-owned-types) to types with the {@join__type} and {@join__owner} directives
 
 # How to read this document
 
@@ -48,15 +48,15 @@ The meaning of the `@join__*` directives is explored in the [Directives](#sec-Di
 
 The example represents **one way** to compose three input schemas, based on [federated composition](https://www.apollographql.com/docs/federation/federation-spec/). These schemas are provided for purposes of illustration only. This spec places no normative requirements on composer input. It does not require that subgraphs use federated composition directives, and it does not place any requirements on *how* the composer builds a supergraph, except to say that the resulting schema must be a valid supergraph document.
 
-[auth](./auth.graphql) provides the `User` type and `Query.me`.
+The [auth](./auth.graphql) subgraph provides the `User` type and `Query.me`.
 
 :::[example](auth.graphql) -- Auth schema
 
-[images](./images.graphql) provides the `Image` type and `URL` scalar.
+The [images](./images.graphql) subgraph provides the `Image` type and `URL` scalar.
 
 :::[example](./images.graphql) -- Images schema
 
-[albums](./albums.graphql) provides the `Album` type and extends `User` and `Image` with album information.
+The [albums](./albums.graphql) subgraph provides the `Album` type and extends `User` and `Image` with album information.
 
 :::[example](./albums.graphql) -- Albums schema
 
@@ -136,7 +136,7 @@ A supergraph schema describes a GraphQL schema that can be served by a router. T
 
 The directives described in this specification are designed for a particular query planning algorithm, and so there are some restrictions on how they can be combined that originate from the requirements of this algorithm. For example, this specification describes a concept of [type ownership](#sec-Owned-fields-on-owned-types) which exists not because we believe it describes the ideal method of structuring your subgraphs, but because this query planning algorithm depends on type ownership. We hope that future versions of this specification can relax some of these restrictions. 
 
-Each supergraph schema contains a list of the subgraphs. The [{join__Graph}](#join__Graph) enum represents this list with an enum value for each subgraph. Each enum value is annotated with a [{@join__graph}](#@join__graph) directive telling the router what endpoint can be used to reach the subgraph, and giving the subgraph a human-readable name that can be used for purposes such as query plan visualization and server logs.
+Each supergraph schema contains a list of its included subgraphs. The [{join__Graph}](#join__Graph) enum represents this list with an enum value for each subgraph. Each enum value is annotated with a [{@join__graph}](#@join__graph) directive telling the router what endpoint can be used to reach the subgraph, and giving the subgraph a human-readable name that can be used for purposes such as query plan visualization and server logs.
 
 To resolve a field, the router needs to know to which subgraphs it can delegate the field's resolution. One explicit way to indicate this in a supergraph schema is by annotating the field with a [{@join__field}](#@join__field) directive specifying which subgraph should be used to resolve that field. (There are other ways of indicating which subgraphs can resolve a field which will be described later.)
 
@@ -187,7 +187,7 @@ type X @join__owner(graph: A) @join__type(graph: A, key: "nestedFieldA") {
 
 ## Fields provided by the parent field
 
-Sometimes, a subgraph {G} may be capable of resolving a field that is ordinarily resolved in a different subgraph if the field's parent object was resolved in {G}. For example, the `Product.priceCents: Int!` field is usually resolved by the Prodcuts subgraph, which knows the `priceCents` for every `Product` in your system. In the Marketing subgraph, there is a `Query.todaysPromotion: Product!` field; while the Marketing subgraph cannot determine the `priceCents` of every product in your system, it does know the `priceCents` of the promoted products, and so the Marketing subgraph can resolve operations like `{ todaysPromotion { priceCents } }`.
+Sometimes, a subgraph {G} may be capable of resolving a field that is ordinarily resolved in a different subgraph if the field's parent object was resolved in {G}. Consider an example where the `Product.priceCents: Int!` field is usually resolved by the Products subgraph, which knows the `priceCents` for every `Product` in your system. In the Marketing subgraph, there is a `Query.todaysPromotion: Product!` field. While the Marketing subgraph cannot determine the `priceCents` of every product in your system, it does know the `priceCents` of the promoted products, and so the Marketing subgraph can resolve operations like `{ todaysPromotion { priceCents } }`.
 
 When this is the case, you can include a `provides` argument in the `@join__field` listing these "pre-calculated" fields. The router can now resolve these fields in the "providing" subgraph instead of in the subgraph that would usually be used to resolve those fields.
 
@@ -380,8 +380,6 @@ Processors MUST validate that you have defined the directives with the same argu
 Processors MUST validate that the schema contains an enum named {join__Graph}; see [its section below](#join__Graph) for other required properties of this enum.
 
 As described in the core specification, all of the directives and enums defined by this schema should be removed from the supergraph's [API schema](https://specs.apollo.dev/core/v0.1/#sec-Parts-of-a-Core-Schema). For example, the {join__Graph} enum should not be visible via introspection.
-
-TODO define field set somewhere?
 
 # Enums
 
