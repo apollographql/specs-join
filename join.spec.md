@@ -430,6 +430,21 @@ When this directive is placed on a type `T`, it means that subgraph `graph` MUST
 
 Every type with a {@join__type} MUST also have a [{@join__owner}](#@join__owner) directive. Any type with a [{@join__owner}](#@join__owner) directive MUST have at least one {@join__type} directive with the same `graph` as the [{@join__owner}](#@join__owner) directive (the "owning graph"), and MUST have at most one {@join__type} directive for each `graph` value other than the owning graph. Any value that appears as a `key` in a {@join__type} directive with a `graph` value other than the owning graph must also appear as a `key` in a {@join__type} directive with `graph` equal to the owning graph.
 
+##! @join__implements
+
+Declares that a type implements an interface in a particular subgraph.
+
+```graphql definition
+directive @join__implements(
+  graph: join__Graph!
+  interface: String!
+) repeatable on OBJECT | INTERFACE
+```
+
+When this directive is placed on a type `T`, it means that `T` implements the specified interface in subgraph `graph`. In that case, the referenced interface type MUST also be annotated with a {@join__type} with the same value of `graph` as this directive.
+
+This information MAY be used by the query planner to optimize requests to the subgraph.
+
 ##! @join__field
 
 Specify the graph that can resolve the field.
