@@ -413,16 +413,18 @@ The {@join__graph} directive MUST be applied to each enum value on {join__Graph}
 
 ##! @join__type
 
-Declares an entity key for a type on a subgraph.
+Declares that a type is known by a particular subgraph. Optionally, an entity key for the type on that subgraph may be specified.
 
 ```graphql definition
 directive @join__type(
   graph: join__Graph!
-  key: String!
+  key: String
 ) repeatable on OBJECT | INTERFACE
 ```
 
-When this directive is placed on a type `T`, it means that subgraph `graph` MUST be able to:
+When this directive is placed on a type `T`, it means that subgraph `graph` contains a definition for type `T`.
+
+If `key` is non-null, it means that subgraph `graph` MUST be able to:
 - Resolve selections on objects of the given type that contain the field set in `key`
 - Use `Query._entities` to resolve representations of objects containing `__typename: "T"` and the fields from the field set in `key`
 
