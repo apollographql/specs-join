@@ -4,7 +4,7 @@
 
 ```raw html
 <table class=spec-data>
-  <tr><td>Status</td><td>Draft</td>
+  <tr><td>Status</td><td>Release</td>
   <tr><td>Version</td><td>0.1</td>
 </table>
 <link rel=stylesheet href=https://specs.apollo.dev/apollo-light.css>
@@ -375,7 +375,7 @@ In order to use the directives described by this specification, GraphQL requires
 
 Processors MUST validate that you have defined the directives with the same arguments, locations, and `repeatable` flag as given below.
 
-:::[definition](join.spec.graphql)
+:::[definition](spec.graphql)
 
 Processors MUST validate that the schema contains an enum named {join__Graph}; see [its section below](#join__Graph) for other required properties of this enum.
 
