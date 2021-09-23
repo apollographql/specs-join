@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "rsync -avz --exclude .dist . .dist && spec-md spec.md > .dist/index.html",
-    "dev": "npm run build && chokidar '**/*' -i '.dist' -c 'npm run build'"
+    "dev": "npm run build || true && chokidar '**/*' -i '.dist' -c 'npm run build'"
   },
   "keywords": [],
   "author": "",
