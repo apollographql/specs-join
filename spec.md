@@ -375,7 +375,7 @@ In order to use the directives described by this specification, GraphQL requires
 
 Processors MUST validate that you have defined the directives with the same arguments, locations, and `repeatable` flag as given below.
 
-:::[definition](join.spec.graphql)
+:::[definition](spec.graphql)
 
 Processors MUST validate that the schema contains an enum named {join__Graph}; see [its section below](#join__Graph) for other required properties of this enum.
 
@@ -436,7 +436,7 @@ Specify the graph that can resolve the field.
 
 ```graphql definition
 directive @join__field(
-  graph: join__Graph!
+  graph: join__Graph
   requires: String
   provides: String
 ) on FIELD_DEFINITION
@@ -444,7 +444,7 @@ directive @join__field(
 
 The field's parent type MUST be annotated with a {@join__type} with the same value of `graph` as this directive, unless the parent type is a [root operation type](http://spec.graphql.org/draft/#sec-Root-Operation-Types).
 
-If a field is not annotated with {@join__field} and its parent type is annotated with `@join__owner(graph: G)`, then a processor MUST treat the field as if it is annotated with `@join__field(graph: G)`. If a field is not annotated with {@join__field} and its parent type is not annotated with {@join__owner} (ie, the parent type is a value type) then it MUST be resolvable in any subgraph that can resolve values of its parent type.
+If a field is not annotated with {@join__field} (or if the `graph` argument is not provided or `null`) and its parent type is annotated with `@join__owner(graph: G)`, then a processor MUST treat the field as if it is annotated with `@join__field(graph: G)`. If a field is not annotated with {@join__field} (or if the `graph` argument is not provided or `null`) and its parent type is not annotated with {@join__owner} (ie, the parent type is a value type) then it MUST be resolvable in any subgraph that can resolve values of its parent type.
 
 :::[example](photos.graphql#User...Image) -- Using {@join__field} to join fields to subgraphs
 
