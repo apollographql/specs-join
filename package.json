@@ -4,13 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "specs.apollo.dev",
-    "build": "rsync -avz --exclude .dist . .dist && spec-md join.spec.md > .dist/index.html"
+    "build": "rsync -avz --exclude .dist . .dist && spec-md spec.md > .dist/index.html",
+    "dev": "npm run build && chokidar '**/*' -i '.dist' -c 'npm run build'"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@queerviolet/speck": "git://github.com/queerviolet/speck.git#main"
+    "@queerviolet/speck": "git://github.com/queerviolet/speck.git#main",
+    "chokidar-cli": "^2.1.0",
+    "watch": "^1.0.2"
   }
 }
